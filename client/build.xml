@@ -1,0 +1,49 @@
+<!-- build.xml derived from a sample at http://ant.apache.org/manual/using.html -->
+<project name="hackRPI_2014_project" default="dist" basedir=".">
+        <description>
+                Build file for "hackRPI_2014_project"
+        </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="dist"    location="dist"/>
+
+    <path id="deps_classpath">
+        <pathelement path="lib/json-simple-1.1.1.jar" />
+    </path>
+
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}"/>
+    </target>
+
+    <target name="compile" depends="init"
+                description="compile the source " >
+        <!-- Compile the java code from ${src} into ${build} -->
+        <!-- "debug" and "debuglevel" options are used to make 
+                line numbers show up in the exception traces, obtained from 
+                "http://stackoverflow.com/questions/9216749/unknown-source-in
+                -java-stack-trace-yet-line-numbers-are-in-the-class-file" -->
+        <javac debug="true" debuglevel="lines,vars,source" srcdir="${src}" destdir="${build}">
+            <classpath refid="deps_classpath" />
+        </javac>
+    </target>
+
+    <target name="dist" depends="compile"
+                description="generate the distribution" >
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}/"/>
+
+        <!-- Put everything in ${build} into the sdd_epic-${DSTAMP}.jar file -->
+        <jar jarfile="${dist}/hackRPI_2014_project-${DSTAMP}.jar" basedir="${build}"/>
+    </target>
+
+    <target name="clean"
+                description="clean up" >
+        <!-- Delete the ${build} and ${dist} directory trees -->
+        <delete dir="${build}"/>
+        <delete dir="${dist}"/>
+    </target>
+</project>
