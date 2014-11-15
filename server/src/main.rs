@@ -82,7 +82,7 @@ fn main() {
     
     for stream in acceptor.incoming() {
         match stream {
-            Err(e) => { println!("Error accepting incoming connection: {}", e) }
+            Err(e) => { println!("Error accepting incoming connection: {}", e); return; }
             Ok(stream) => spawn(proc() {
                 show_examples(stream)
             })
