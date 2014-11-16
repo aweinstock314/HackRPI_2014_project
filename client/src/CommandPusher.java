@@ -3,6 +3,7 @@ import java.io.*;
 import java.awt.event.*;
 import java.util.*;
 import org.json.simple.*;
+import java.awt.*;
 
 public class CommandPusher extends java.util.TimerTask implements KeyListener,MouseMotionListener,MouseListener {
 
@@ -10,6 +11,8 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     
     private int cur_mouse_x;
     private int cur_mouse_y;
+    
+    private Robot rob;
 
     PrintWriter out;
 
@@ -17,6 +20,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
 
     public CommandPusher(PrintWriter out) {
         this.out = out;
+        rob = new Robot();
         pressedKeys = new HashSet<Integer>();
     }
 
@@ -88,14 +92,16 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         obj.put("\"command\"",cmd);
         obj.put("\"timestamp\"",timestamp);
         out.print(obj.toString());
-
-
     }
 
     public void mouseMoved(MouseEvent e) {
         sendOrientation(e.getX()-cur_mouse_x,e.getY()-cur_mouse_y);
         cur_mouse_x = e.getX();
         cur_mouse_y = e.getY();
+        rob.mouseMove(500,500);
+        Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+        cur_mouse_x = mousePoint.x;
+        cur_mouse_y = mousePoint.y;
     }
     
     public void mouseDragged(MouseEvent e) {}
