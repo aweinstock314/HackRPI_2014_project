@@ -122,8 +122,7 @@ fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
 fn process_output_to_client(mut stream: TcpStream,
                             playernum: int,
                             receive_broadcast: Receiver<ServerCommand>) {
-    loop {
-        let action = receive_broadcast.recv();
+    for action in receive_broadcast.iter() {
         stream.write_line(json::encode(&action).as_slice());
     }
 }
@@ -131,8 +130,7 @@ fn process_output_to_client(mut stream: TcpStream,
 fn manage_world(mut world: HashMap<int, GameObject>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(int, PlayerCommand)>) {
-    loop {
-        let (playerid, action) = player_moves.recv();
+    for (playerid, action) in player_moves.iter() {
         match action {
             MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
