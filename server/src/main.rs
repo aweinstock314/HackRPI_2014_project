@@ -111,10 +111,6 @@ fn interact_with_client(mut stream: TcpStream,
     let mut buffered = BufferedStream::new(stream.clone());
     spawn(proc() { process_input_from_client(buffered, playernum, transmit_playmove) });
     process_output_to_client(stream, playernum, receive_broadcast);
-    /*//send_world_creation(&mut buffered);
-    loop {
-        //send_and_receive_updates(&mut buffered);
-    }*/
 }
 
 fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
