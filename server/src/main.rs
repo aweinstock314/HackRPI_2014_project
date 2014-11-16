@@ -231,6 +231,17 @@ fn rebroadcast_transmitter<T: Send+Clone>(r: Receiver<T>, ts: Arc<Mutex<Vec<Send
     }
 }
 
+fn odeMainTest() {
+    // transcribed from ODE's "demo_buggy" example
+    unsafe {
+        ode_bindgen::dInitODE();
+        let world = ode_bindgen::dWorldCreate();
+        let space = ode_bindgen::dHashSpaceCreate(0 as *mut ode_bindgen::Struct_dxSpace);
+        let ground = ode_bindgen::dCreatePlane(space, 0.0, 1.0, 0.0, 0.0);
+        ode_bindgen::dCloseODE();
+    }
+}
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
     println!("current time: {}", time::get_time());
