@@ -4,6 +4,7 @@ use serialize::json;
 use std::io::{TcpListener, TcpStream, BufferedStream};
 use std::io::{Acceptor, Listener};
 use std::collections::HashMap;
+use std::collections::hash_map::{Vacant, Occupied};
 use std::sync::{Mutex, Arc};
 
 // hack around cargo not respecting "proper" link attributes
@@ -127,10 +128,33 @@ fn process_output_to_client(mut stream: TcpStream,
     }
 }
 
+fn get_player_mesh() -> Vec<f64> {
+    vec!()
+}
+
+fn get_player(world: &mut HashMap<int, GameObject>,
+                playerid: int,
+                broadcast: Sender<ServerCommand>) -> &mut GameObject {
+    let player = match world.entry(playerid) {
+        Vacant(entry) => {
+            let newplayer = GameObject {
+                pos: Position(0.0, 0.0, 0.0),
+                ori: Orientation(0.0, 0.0),
+                mesh: get_player_mesh()
+            };
+            broadcast.send(AddObject(playerid, newplayer.pos, newplayer.ori, Player));
+            entry.set(newplayer)
+        }
+        Occupied(entry) => { entry.into_mut() }
+    };
+    player
+}
+
 fn manage_world(mut world: HashMap<int, GameObject>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(int, PlayerCommand)>) {
     for (playerid, action) in player_moves.iter() {
+        drop(get_player(&mut world, playerid, broadcast.clone()));
         match action {
             MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
