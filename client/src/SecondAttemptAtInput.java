@@ -28,6 +28,7 @@ public class SecondAttemptAtInput implements KeyListener
     public static final int lookdown = KeyEvent.VK_K;
     public static final int lookleft = KeyEvent.VK_J;
     public static final int lookright = KeyEvent.VK_L;
+    public static final int shoot = KeyEvent.VK_SPACE;
 
     public void keyPressed(KeyEvent e) {
         //System.out.println(e.getKeyCode());
@@ -43,6 +44,7 @@ public class SecondAttemptAtInput implements KeyListener
             case moveup: break;
             case moveleft: emitMoveSideways(-move_delta); break;
             case moveright: emitMoveSideways(move_delta); break;
+            case shoot: emitShoot(); break;
             default:
         }
     }
@@ -63,6 +65,10 @@ public class SecondAttemptAtInput implements KeyListener
         x.put("fields", y);
         ps.println(x);
         System.out.println(x);
+    }
+    public void emitShoot() {
+        ps.println("Shoot");
+        System.out.println("Shoot");
     }
     public void emitRotateCamera(float theta, float phi) {
         JSONObject x = new JSONObject();

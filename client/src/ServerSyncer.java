@@ -31,9 +31,8 @@ public class ServerSyncer extends TimerTask {
             Object obj = JSONValue.parse(jsonString);
             JSONObject jsobj = (JSONObject)obj;
             if(obj == null) return;
-            JSONObject cmd = (JSONObject)jsobj.get("command");
-            String cmdType = (String)cmd.get("variant");
-            JSONArray fields = (JSONArray)cmd.get("fields");
+            String cmdType = (String)jsobj.get("variant");
+            JSONArray fields = (JSONArray)jsobj.get("fields");
             long i = (Long)fields.get(0);
             if(cmdType == "SetPosition") {
                 JSONObject posData = (JSONObject)fields.get(1);
