@@ -14,6 +14,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     
     private Robot rob;
     private boolean working_robot;
+    private boolean robot_reset = true;
 
     PrintWriter out;
 
@@ -29,6 +30,8 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         }
         
         pressedKeys = new HashSet<Integer>();
+        Timer tim = new Timer();
+        tim.schedule(this,0);
     }
 
     //send a shoot command
@@ -102,14 +105,12 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     }
 
     public void mouseMoved(MouseEvent e) {
-        sendOrientation(e.getX()-cur_mouse_x,e.getY()-cur_mouse_y);
-        cur_mouse_x = e.getX();
-        cur_mouse_y = e.getY();
-        if(working_robot) {
-            rob.mouseMove(500,500);
-            Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-            cur_mouse_x = mousePoint.x;
-            cur_mouse_y = mousePoint.y;
+        if(!robot_reset) {
+            sendOrientation(e.getX()-cur_mouse_x,e.getY()-cur_mouse_y);
+            cur_mouse_x = e.getX();
+            cur_mouse_y = e.getY();
+        } else {
+            robot_reset = false;
         }
     }
     
@@ -134,7 +135,15 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     }
 
     public void mouseEntered(MouseEvent e) {}
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+        if(working_robot) {
+            robot_reset = true;
+            rob.mouseMove(500,500); //FIXME
+            Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+            cur_mouse_x = mousePoint.x;
+            cur_mouse_y = mousePoint.y;
+        }
+    }
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
 }
