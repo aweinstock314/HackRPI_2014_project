@@ -9,15 +9,15 @@ use std::collections::HashMap;
 #[link(name = "ode")] extern {}
 mod ode_bindgen;
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 //pub struct Position { x: f64, y: f64, z: f64 }
 pub struct Position (f64, f64, f64);
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 //pub struct Orientation { theta: f64, phi: f64 }
 pub struct Orientation (f64, f64);
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 pub enum PlayerCommand {
     MoveForward(f64),
     MoveSideways(f64),
@@ -25,7 +25,7 @@ pub enum PlayerCommand {
     Shoot,
 }
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 pub enum ObjectType {
     Floor,
     Obstacle(int),
@@ -33,7 +33,7 @@ pub enum ObjectType {
     Bullet,
 }
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 pub enum ServerCommand {
     SetPosition(int, Position),
     SetOrientation(int, Orientation),
@@ -41,13 +41,13 @@ pub enum ServerCommand {
     RemoveObject(int),
 }
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 pub struct IncomingMessage {
     command: PlayerCommand,
     timestamp: i64,
 }
 
-#[deriving(Encodable, Decodable)]
+#[deriving(Encodable, Decodable, Clone)]
 pub struct OutgoingMessage {
     command: ServerCommand,
     timestamp: i64,
@@ -141,6 +141,27 @@ fn manage_world(mut world: HashMap<int, GameObject>,
     }
 }
 
+pub struct ReceiverMultiplexer<T: Send+Clone> {
+    receiver: Receiver<T>,
+    transmitters: Vec<Sender<T>>
+}
+
+impl<T: Send+Clone> ReceiverMultiplexer<T> {
+    fn new(r: Receiver<T>) -> ReceiverMultiplexer<T> {
+        ReceiverMultiplexer { receiver: r, transmitters: vec!() }
+    }
+    fn add_transmitter(&mut self, s: Sender<T>) {
+        self.transmitters.push(s);
+    }
+    fn rebroadcast(&mut self) {
+        for msg in self.receiver.iter() {
+            for transmitter in self.transmitters.iter() {
+                transmitter.send(msg.clone());
+            }
+        }
+    }
+}
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
     println!("current time: {}", time::get_time());
@@ -151,10 +172,13 @@ fn main() {
     let mut world = HashMap::<int, GameObject>::new();
     let mut playernum: int = 0;
 
-    let (transmit_broadcast, receive_broadcast) = channel();
+    let (transmit_broadcast, receive_broadcast_precursor) = channel();
     let (transmit_playmove, receive_playmove) = channel();
 
+    let mut receive_broadcast = ReceiverMultiplexer::new(receive_broadcast_precursor);
+
     spawn(proc() { manage_world(world, transmit_broadcast, receive_playmove); });
+    //spawn(proc() { receive_broadcast.rebroadcast(); });
 
     let mut acceptor = listener.listen();
     
@@ -164,9 +188,11 @@ fn main() {
             Ok(stream) => {
                 playernum += 1;
                 let tpm = transmit_playmove.clone();
-                    spawn(proc() {
-                    show_examples(stream, playernum.clone(), tpm);
-                })
+                let (tx, rx) = channel();
+                receive_broadcast.add_transmitter(tx);
+                //let rbc = receive_broadcast.clone();
+                //spawn(proc() { show_examples(stream, playernum.clone(), tpm); });
+                spawn(proc() { interact_with_client(stream, playernum, rx, tpm); });
             }
         }
     }
