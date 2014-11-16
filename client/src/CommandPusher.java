@@ -20,7 +20,10 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
 
     public CommandPusher(PrintWriter out) {
         this.out = out;
-        rob = new Robot();
+        try {
+            rob = new Robot();
+        } catch (AWTException) {}
+        
         pressedKeys = new HashSet<Integer>();
     }
 
