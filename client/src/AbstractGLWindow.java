@@ -1,5 +1,6 @@
 package client;
 
+import com.jogamp.opengl.util.FPSAnimator;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.GLAutoDrawable;
@@ -17,12 +18,14 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
     abstract public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height);
     abstract public void dispose(GLAutoDrawable drawable);
 
-    protected void constructorAux(int w, int h)
+    protected void constructorAux(int w, int h, int fps)
     {
         setLayout(null);
         GLCanvas glcanv = new GLCanvas();
         add(glcanv);
+        glcanv.addGLEventListener(this);
         glcanv.setBounds(0, 0, w, h);
+        new FPSAnimator(glcanv, fps).start();
     }
     public static void do_main(AbstractGLWindow aglw)
     {
