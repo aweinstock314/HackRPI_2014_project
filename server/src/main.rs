@@ -76,7 +76,7 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
     RemoveObject(42),
 )}
 
-fn show_examples(mut stream: TcpStream, playernum: int) {
+fn show_examples(mut stream: TcpStream, playernum: int, transmit_playmove: Sender<(int, PlayerCommand)>) {
     let seconds = time::get_time().sec;
     println!("Received a connection from {} at time {} (player {}).", stream.peer_name(), seconds, playernum);
     //stream.write_line(json::encode(&IncomingMessage{command: MoveForward(0.5), timestamp: 0}).as_slice());
@@ -95,9 +95,27 @@ fn show_examples(mut stream: TcpStream, playernum: int) {
         send_and_receive_updates(&mut buffered);
     }
 }
-
-fn manage_world(
 */
+
+fn manage_world(mut world: HashMap<int, GameObject>,
+                broadcast: Sender<ServerCommand>,
+                player_moves: Receiver<(int, PlayerCommand)>) {
+    loop {
+        let (playerid, action) = player_moves.recv();
+        match action {
+            MoveForward(delta) => {
+                println!("Player #{} moves {} units forward", playerid, delta);
+            }
+            MoveSideways(delta) => {
+                println!("Player #{} moves {} units to their right", playerid, delta);
+            }
+            RotateCamera(Orientation(theta, phi)) => {
+                println!("Player #{} rotates by ({}, {})", playerid, theta, phi);
+            }
+            Shoot => { println!("Player #{} shoots", playerid); }
+        }
+    }
+}
 
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
@@ -109,6 +127,11 @@ fn main() {
     let mut world = HashMap::<int, GameObject>::new();
     let mut playernum: int = 0;
 
+    let (transmit_broadcast, receive_broadcast) = channel();
+    let (transmit_playmove, receive_playmove) = channel();
+
+    spawn(proc() { manage_world(world, transmit_broadcast, receive_playmove); });
+
     let mut acceptor = listener.listen();
     
     for stream in acceptor.incoming() {
@@ -116,8 +139,9 @@ fn main() {
             Err(e) => { println!("Error accepting incoming connection: {}", e); return; }
             Ok(stream) => {
                 playernum += 1;
+                let tpm = transmit_playmove.clone();
                     spawn(proc() {
-                    show_examples(stream, playernum.clone());
+                    show_examples(stream, playernum.clone(), tpm);
                 })
             }
         }
