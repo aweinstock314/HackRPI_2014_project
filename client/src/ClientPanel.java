@@ -1,8 +1,8 @@
 package client;
 
 import java.io.FileReader;
-import javax.media.opengl.GL2;
-import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.*;
+import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
@@ -33,9 +33,9 @@ public class ClientPanel extends AbstractGLWindow
         setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
         for(DrawObject dO : go.actors.values()) {
-            if(dO.type == "Player") {
+            if(dO.type.equals("Player")) {
                 dO.draw(gl2,playerModel);
-            } else if(dO.type == "Bullet") {
+            } else if(dO.type.equals("Bullet")) {
                 dO.draw(gl2,bulletModel);
             }
         }
@@ -47,12 +47,12 @@ public class ClientPanel extends AbstractGLWindow
 
     public ClientPanel(int w, int h, GameObject go, CommandPusher cp, CameraHandler ch)
     {
-        constructorAux(w, h, 5);
+        GLCanvas canv = constructorAux(w, h, 5);
         this.go = go;
         cameraHandler = ch;
-        addMouseMotionListener(cp);
-        addKeyListener(cp);
-        addMouseListener(cp);
+        canv.addMouseMotionListener(cp);
+        canv.addKeyListener(cp);
+        canv.addMouseListener(cp);
         try { bulletModel = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         catch(Exception e) { e.printStackTrace(); }
         try { playerModel = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
