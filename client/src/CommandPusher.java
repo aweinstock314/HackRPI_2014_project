@@ -79,8 +79,8 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
 
     public void sendSignal(String signalType) {
         System.out.println(signalType);
+        out.println();
         out.println(signalType);
-        out.flush();
         /*
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();

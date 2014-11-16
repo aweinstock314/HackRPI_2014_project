@@ -46,6 +46,9 @@ public class DrawObject {
     }
 
     public void draw(GL2 gl2, JSONArray model) {
+        System.out.println("x: " + Float.toString(x));
+        System.out.println("y: " + Float.toString(y));
+        System.out.println("z: " + Float.toString(z));
         if(isPlayer) return;
         gl2.glBegin(gl2.GL_TRIANGLES);
         for(int i = 0; i < (model.size()/3); i++) {
