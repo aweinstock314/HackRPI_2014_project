@@ -15,7 +15,7 @@ public class GameInstantiator {
         CommandPusher cp = new CommandPusher(tc.getWriter());
         JFrame jf = new JFrame();
         jf.setSize(500,500);
-        UIPanel panel = new UIPanel(go,cp);
+        UIPanel panel = new UIPanel(cp);
         jf.setContentPane(panel);
         jf.pack();
         jf.setVisible(true);

@@ -4,9 +4,7 @@ import java.awt.*;
 
 public class UIPanel extends JPanel {
 
-    public UIPanel(GameObject go, CommandPusher cp) {
-        setPreferredSize(new Dimension(500,500));
-        Drawer dr = new Drawer(go,this);
+    public UIPanel(CommandPusher cp) {
         addKeyListener(cp);
         addMouseMotionListener(cp);
         addMouseListener(cp);
