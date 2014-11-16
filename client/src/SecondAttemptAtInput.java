@@ -53,6 +53,7 @@ public class SecondAttemptAtInput implements KeyListener
         y.add(delta);
         x.put("fields", y);
         ps.println(x);
+        System.out.println(x);
     }
     public void emitMoveSideways(float delta) {
         JSONObject x = new JSONObject();
@@ -61,6 +62,7 @@ public class SecondAttemptAtInput implements KeyListener
         y.add(delta);
         x.put("fields", y);
         ps.println(x);
+        System.out.println(x);
     }
     public void emitRotateCamera(float theta, float phi) {
         JSONObject x = new JSONObject();
@@ -72,6 +74,7 @@ public class SecondAttemptAtInput implements KeyListener
         y.add(z);
         x.put("fields", y);
         ps.println(x);
+        System.out.println(x);
     }
     public void keyReleased(KeyEvent e) {} 
     public void keyTyped(KeyEvent e) {}

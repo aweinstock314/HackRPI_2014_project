@@ -19,7 +19,7 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
     abstract public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height);
     abstract public void dispose(GLAutoDrawable drawable);
 
-    protected void constructorAux(int w, int h, int fps)
+    protected GLCanvas constructorAux(int w, int h, int fps)
     {
         setLayout(null);
         GLCanvas glcanv = new GLCanvas();
@@ -31,6 +31,7 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
         //glcanv.addMouseMotionListener(cp);
         //glcanv.requestFocus();
         new FPSAnimator(glcanv, fps).start();
+        return glcanv;
     }
     public static JFrame do_main(AbstractGLWindow aglw)
     {

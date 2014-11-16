@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.net.Socket;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
@@ -12,6 +13,7 @@ public class ModelViewer extends AbstractGLWindow
 {
     public JSONArray model = null;
     public CameraHandler cameraHandler = new CameraHandler();
+    public SecondAttemptAtInput saai = null;
 
     public void setProjection(GL2 gl2, float width, float height)
     {
@@ -45,7 +47,11 @@ public class ModelViewer extends AbstractGLWindow
 
     public ModelViewer(int w, int h)
     {
-        constructorAux(w, h, 5);
+        try { saai = new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream()); }
+        catch(Exception e) { e.printStackTrace(); }
+        GLCanvas glcanv = constructorAux(w, h, 5);
+        glcanv.addKeyListener(saai);
+        glcanv.requestFocus();
         try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         catch(Exception e) { e.printStackTrace(); }
     }
@@ -55,7 +61,6 @@ public class ModelViewer extends AbstractGLWindow
         JFrame jf = do_main(mv);
         jf.addMouseWheelListener(mv.cameraHandler);
         jf.addKeyListener(mv.cameraHandler);
-        try { jf.addKeyListener(new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream())); }
-        catch(Exception e) { e.printStackTrace(); }
+        jf.addKeyListener(mv.saai);
     }
 }
