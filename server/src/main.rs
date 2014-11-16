@@ -1,8 +1,9 @@
 extern crate serialize;
 extern crate time;
 use serialize::json;
-use std::io::{TcpListener, TcpStream};
+use std::io::{TcpListener, TcpStream, BufferedStream};
 use std::io::{Acceptor, Listener};
+use std::collections::HashMap;
 
 // hack around cargo not respecting "proper" link attributes
 #[link(name = "ode")] extern {}
@@ -52,6 +53,15 @@ pub struct OutgoingMessage {
     timestamp: i64,
 }
 
+pub struct GameObject {
+    pos: Position,
+    ori: Orientation,
+    mesh: Vec<f64>,
+}
+
+/*fn createPlayer(&mut world: &mut HashMap<int, GameObject>) {
+}*/
+
 fn example_playercommands() -> Vec<PlayerCommand> { vec!(
     MoveForward(0.5),
     MoveSideways(0.6),
@@ -66,9 +76,9 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
     RemoveObject(42),
 )}
 
-fn show_examples(mut stream: TcpStream) {
+fn show_examples(mut stream: TcpStream, playernum: int) {
     let seconds = time::get_time().sec;
-    println!("Received a connection from {} at time {}.", stream.peer_name(), seconds);
+    println!("Received a connection from {} at time {} (player {}).", stream.peer_name(), seconds, playernum);
     //stream.write_line(json::encode(&IncomingMessage{command: MoveForward(0.5), timestamp: 0}).as_slice());
     for &cmd in example_servercommands().iter() {
         stream.write_line(json::encode(&OutgoingMessage{command: cmd, timestamp: seconds}).as_slice());
@@ -78,6 +88,17 @@ fn show_examples(mut stream: TcpStream) {
     }
 }
 
+/*fn interact_with_client(mut stream: TcpStream) {
+    let mut buffered = BufferedStream::new(stream);
+    send_world_creation(&mut buffered);
+    loop {
+        send_and_receive_updates(&mut buffered);
+    }
+}
+
+fn manage_world(
+*/
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
     println!("current time: {}", time::get_time());
@@ -85,14 +106,20 @@ fn main() {
     //let listener = TcpListener::bind("127.0.0.1:51701"); //large number for port chosen pseudorandomly
     let listener = TcpListener::bind("0.0.0.0:51701"); //large number for port chosen pseudorandomly
 
+    let mut world = HashMap::<int, GameObject>::new();
+    let mut playernum: int = 0;
+
     let mut acceptor = listener.listen();
     
     for stream in acceptor.incoming() {
         match stream {
             Err(e) => { println!("Error accepting incoming connection: {}", e); return; }
-            Ok(stream) => spawn(proc() {
-                show_examples(stream)
-            })
+            Ok(stream) => {
+                playernum += 1;
+                    spawn(proc() {
+                    show_examples(stream, playernum.clone());
+                })
+            }
         }
     }
 }
