@@ -60,7 +60,7 @@ public class ServerSyncer extends TimerTask {
             } else if(cmdType == "RemoveObject") {
                 go.actors.remove(i);
             }
-        } catch(ClassCastException e) {
+        } catch(Exception e) {
             throw new RuntimeException("Could not parse JSON");
         }
     }

@@ -17,6 +17,7 @@ public class ThreadClient {
             System.err.println("Can't find given host: " + hostname);
         } catch (IOException e) {
             System.err.println("Couldn't get connection I/O");
+            System.exit(0);
         }
     }
 
@@ -29,17 +30,16 @@ public class ThreadClient {
     }
 
     public static void main(String[] args) {
-        ThreadClient tc = new ThreadClient(args[0], 51701);
+        ThreadClient tc = new ThreadClient("129.161.91.206",51701);
         BufferedReader in = tc.getReader();
-        try {
-            while(true) {
-                String initialString = in.readLine();
-                //Object obj = JSONValue.parse(initialString);
-                //JSONArray array = (JSONArray)obj;
-                System.out.println(initialString);
-            }
-        } catch(IOException io) {
-            System.err.println("Read failed");
+        PrintWriter out = tc.getWriter();
+        while(true) {
+            out.println("What are you telling me?");
+            try {
+            String s = in.readLine();
+            System.out.println(s);
+            out.println("You told me: " + s);
+            } catch(Exception e) {} //I'm too tired to care
         }
     }
 }
