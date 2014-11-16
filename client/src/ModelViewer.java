@@ -1,6 +1,7 @@
 package client;
 
 import java.io.FileReader;
+import java.net.Socket;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.swing.JFrame;
@@ -54,5 +55,7 @@ public class ModelViewer extends AbstractGLWindow
         JFrame jf = do_main(mv);
         jf.addMouseWheelListener(mv.cameraHandler);
         jf.addKeyListener(mv.cameraHandler);
+        try { jf.addKeyListener(new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream())); }
+        catch(Exception e) { e.printStackTrace(); }
     }
 }
