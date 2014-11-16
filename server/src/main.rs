@@ -4,6 +4,7 @@ use serialize::json;
 use std::io::{TcpListener, TcpStream, BufferedStream};
 use std::io::{Acceptor, Listener};
 use std::collections::HashMap;
+use std::sync::{Mutex, Arc};
 
 // hack around cargo not respecting "proper" link attributes
 #[link(name = "ode")] extern {}
@@ -141,7 +142,7 @@ fn manage_world(mut world: HashMap<int, GameObject>,
     }
 }
 
-pub struct ReceiverMultiplexer<T: Send+Clone> {
+/*pub struct ReceiverMultiplexer<T: Send+Clone> {
     receiver: Receiver<T>,
     transmitters: Vec<Sender<T>>
 }
@@ -160,6 +161,17 @@ impl<T: Send+Clone> ReceiverMultiplexer<T> {
             }
         }
     }
+}*/
+
+fn rebroadcast_transmitter<T: Send+Clone>(r: Receiver<T>, ts: Arc<Mutex<Vec<Sender<T>>>>)
+{
+    for msg in r.iter() {
+        let mut val = ts.lock();
+        for t in val.iter() {
+            t.send(msg.clone());
+        }
+        drop(val);
+    }
 }
 
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
@@ -175,10 +187,14 @@ fn main() {
     let (transmit_broadcast, receive_broadcast_precursor) = channel();
     let (transmit_playmove, receive_playmove) = channel();
 
-    let mut receive_broadcast = ReceiverMultiplexer::new(receive_broadcast_precursor);
+    //let mut receive_broadcast = ReceiverMultiplexer::new(receive_broadcast_precursor);
+    let transmitters = Arc::new(Mutex::new(vec!()));
+    let transmitters2 = transmitters.clone();
+    spawn(proc() { rebroadcast_transmitter(receive_broadcast_precursor, transmitters2); });
 
     spawn(proc() { manage_world(world, transmit_broadcast, receive_playmove); });
     //spawn(proc() { receive_broadcast.rebroadcast(); });
+    
 
     let mut acceptor = listener.listen();
     
@@ -189,7 +205,12 @@ fn main() {
                 playernum += 1;
                 let tpm = transmit_playmove.clone();
                 let (tx, rx) = channel();
-                receive_broadcast.add_transmitter(tx);
+                //receive_broadcast.add_transmitter(tx);
+                {
+                    let mut val = transmitters.lock();
+                    val.push(tx);
+                    drop(val);
+                }
                 //let rbc = receive_broadcast.clone();
                 //spawn(proc() { show_examples(stream, playernum.clone(), tpm); });
                 spawn(proc() { interact_with_client(stream, playernum, rx, tpm); });
