@@ -111,10 +111,6 @@ fn interact_with_client(mut stream: TcpStream,
     let mut buffered = BufferedStream::new(stream.clone());
     spawn(proc() { process_input_from_client(buffered, playernum, transmit_playmove) });
     process_output_to_client(stream, playernum, receive_broadcast);
-    /*//send_world_creation(&mut buffered);
-    loop {
-        //send_and_receive_updates(&mut buffered);
-    }*/
 }
 
 fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
@@ -228,6 +224,17 @@ fn rebroadcast_transmitter<T: Send+Clone>(r: Receiver<T>, ts: Arc<Mutex<Vec<Send
             t.send(msg.clone());
         }
         drop(val);
+    }
+}
+
+fn odeMainTest() {
+    // transcribed from ODE's "demo_buggy" example
+    unsafe {
+        ode_bindgen::dInitODE();
+        let world = ode_bindgen::dWorldCreate();
+        let space = ode_bindgen::dHashSpaceCreate(0 as *mut ode_bindgen::Struct_dxSpace);
+        let ground = ode_bindgen::dCreatePlane(space, 0.0, 1.0, 0.0, 0.0);
+        ode_bindgen::dCloseODE();
     }
 }
 

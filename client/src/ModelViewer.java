@@ -36,10 +36,24 @@ public class ModelViewer extends AbstractGLWindow
         gl2.glLoadIdentity();
         cameraHandler.apply(gl2);
     }
+    public void enableDepth(GL2 gl2)
+    {
+        gl2.glClearColor(0,0,0,1);
+        gl2.glShadeModel(gl2.GL_SMOOTH);
+        gl2.glClearDepth(1.0f);
+        gl2.glEnable(gl2.GL_DEPTH_TEST);
+        gl2.glDepthFunc(gl2.GL_LEQUAL);
+
+        gl2.glEnable(gl2.GL_ALPHA_TEST);
+        gl2.glEnable(gl2.GL_BLEND);
+        gl2.glBlendFunc(gl2.GL_SRC_ALPHA,gl2.GL_ONE_MINUS_SRC_ALPHA);
+        gl2.glClear(gl2.GL_COLOR_BUFFER_BIT | gl2.GL_DEPTH_BUFFER_BIT);
+    }
 
     public void display(GLAutoDrawable drawable)
     {
         GL2 gl2 = drawable.getGL().getGL2();
+        enableDepth(gl2);
         //setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         setPerspectiveProjection(gl2);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
