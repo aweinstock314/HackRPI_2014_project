@@ -88,14 +88,38 @@ fn show_examples(mut stream: TcpStream, playernum: int, transmit_playmove: Sende
     }
 }
 
-/*fn interact_with_client(mut stream: TcpStream) {
-    let mut buffered = BufferedStream::new(stream);
-    send_world_creation(&mut buffered);
+fn interact_with_client(mut stream: TcpStream,
+                        playernum: int,
+                        receive_broadcast: Receiver<ServerCommand>,
+                        transmit_playmove: Sender<(int, PlayerCommand)>) {
+    let mut buffered = BufferedStream::new(stream.clone());
+    spawn(proc() { process_input_from_client(buffered, playernum, transmit_playmove) });
+    process_output_to_client(stream, playernum, receive_broadcast);
+    /*//send_world_creation(&mut buffered);
     loop {
-        send_and_receive_updates(&mut buffered);
+        //send_and_receive_updates(&mut buffered);
+    }*/
+}
+
+fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
+                            playernum: int,
+                            transmit_playmove: Sender<(int, PlayerCommand)>) {
+    for line in stream.lines() {
+        match json::decode(line.unwrap().as_slice()) {
+            Ok(command) => { transmit_playmove.send((playernum, command)); }
+            Err(e) => { println!("Bad input from player #{}: {} (ignoring)", playernum, e); }
+        }
     }
 }
-*/
+
+fn process_output_to_client(mut stream: TcpStream,
+                            playernum: int,
+                            receive_broadcast: Receiver<ServerCommand>) {
+    loop {
+        let action = receive_broadcast.recv();
+        stream.write_line(json::encode(&action).as_slice());
+    }
+}
 
 fn manage_world(mut world: HashMap<int, GameObject>,
                 broadcast: Sender<ServerCommand>,
