@@ -14,14 +14,11 @@ public class GameInstantiator {
         GameObject go = new GameObject();
         CommandPusher cp = new CommandPusher(tc.getWriter());
         JFrame jf = new JFrame();
-        jf.setSize(500,500);
-        UIPanel panel = new UIPanel(cp);
+        ClientPanel panel = new ClientPanel(500,500, go, cp);
         jf.setContentPane(panel);
         jf.pack();
         jf.setVisible(true);
-        Drawer dr = new Drawer(go,panel);
         java.util.Timer timer = new java.util.Timer(true);
-        timer.scheduleAtFixedRate(dr,50,25);
 
         ServerSyncer ss = new ServerSyncer(tc.getReader(),go);
         timer.schedule(ss,0);
