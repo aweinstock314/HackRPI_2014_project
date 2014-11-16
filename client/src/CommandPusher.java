@@ -13,6 +13,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     private int cur_mouse_y;
     
     private Robot rob;
+    private boolean working_robot;
 
     PrintWriter out;
 
@@ -22,7 +23,10 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         this.out = out;
         try {
             rob = new Robot();
-        } catch (AWTException) {}
+            working_robot = true;
+        } catch (AWTException e) {
+            working_robot = false;
+        }
         
         pressedKeys = new HashSet<Integer>();
     }
@@ -101,10 +105,12 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         sendOrientation(e.getX()-cur_mouse_x,e.getY()-cur_mouse_y);
         cur_mouse_x = e.getX();
         cur_mouse_y = e.getY();
-        rob.mouseMove(500,500);
-        Point mousePoint = MouseInfo.getPointerInfo().getLocation();
-        cur_mouse_x = mousePoint.x;
-        cur_mouse_y = mousePoint.y;
+        if(working_robot) {
+            rob.mouseMove(500,500);
+            Point mousePoint = MouseInfo.getPointerInfo().getLocation();
+            cur_mouse_x = mousePoint.x;
+            cur_mouse_y = mousePoint.y;
+        }
     }
     
     public void mouseDragged(MouseEvent e) {}
