@@ -1,4 +1,5 @@
 extern crate serialize;
+extern crate time;
 use serialize::json;
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
@@ -39,13 +40,13 @@ pub enum ServerCommand {
 #[deriving(Encodable, Decodable)]
 pub struct IncomingMessage {
     command: PlayerCommand,
-    timestamp: u64,
+    timestamp: i64,
 }
 
 #[deriving(Encodable, Decodable)]
 pub struct OutgoingMessage {
     command: ServerCommand,
-    timestamp: u64,
+    timestamp: i64,
 }
 
 fn example_playercommands() -> Vec<PlayerCommand> { vec!(
@@ -63,18 +64,20 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
 )}
 
 fn show_examples(mut stream: TcpStream) {
-    println!("Received a connection from {}.", stream.peer_name());
+    let seconds = time::get_time().sec;
+    println!("Received a connection from {} at time {}.", stream.peer_name(), seconds);
     //stream.write_line(json::encode(&IncomingMessage{command: MoveForward(0.5), timestamp: 0}).as_slice());
     for &cmd in example_servercommands().iter() {
-        stream.write_line(json::encode(&OutgoingMessage{command: cmd, timestamp: 0}).as_slice());
+        stream.write_line(json::encode(&OutgoingMessage{command: cmd, timestamp: seconds}).as_slice());
     }
     for &cmd in example_playercommands().iter() {
-        stream.write_line(json::encode(&IncomingMessage{command: cmd, timestamp: 0}).as_slice());
+        stream.write_line(json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).as_slice());
     }
 }
 
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
+    println!("current time: {}", time::get_time());
     //let listener = TcpListener::bind("127.0.0.1:51701"); //large number for port chosen pseudorandomly
     let listener = TcpListener::bind("0.0.0.0:51701"); //large number for port chosen pseudorandomly
 
@@ -82,7 +85,7 @@ fn main() {
     
     for stream in acceptor.incoming() {
         match stream {
-            Err(e) => { println!("Error accepting incoming connection: {}", e) }
+            Err(e) => { println!("Error accepting incoming connection: {}", e); return; }
             Ok(stream) => spawn(proc() {
                 show_examples(stream)
             })
