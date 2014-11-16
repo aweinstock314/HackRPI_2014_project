@@ -93,6 +93,7 @@ fn interact_with_client(mut stream: TcpStream,
                         playernum: int,
                         receive_broadcast: Receiver<ServerCommand>,
                         transmit_playmove: Sender<(int, PlayerCommand)>) {
+    println!("Player #{} joined ({}).", playernum, stream.peer_name());
     let mut buffered = BufferedStream::new(stream.clone());
     spawn(proc() { process_input_from_client(buffered, playernum, transmit_playmove) });
     process_output_to_client(stream, playernum, receive_broadcast);
@@ -106,9 +107,14 @@ fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
                             playernum: int,
                             transmit_playmove: Sender<(int, PlayerCommand)>) {
     for line in stream.lines() {
-        match json::decode(line.unwrap().as_slice()) {
-            Ok(command) => { transmit_playmove.send((playernum, command)); }
-            Err(e) => { println!("Bad input from player #{}: {} (ignoring)", playernum, e); }
+        match line {
+            Ok(line) => {
+                match json::decode(line.as_slice()) {
+                    Ok(command) => { transmit_playmove.send((playernum, command)); }
+                    Err(e) => { println!("Bad input from player #{}: {} (ignoring)", playernum, e); }
+                }
+            }
+            Err(e) => { println!("Some error occurred reading a line: {}", e); }
         }
     }
 }
