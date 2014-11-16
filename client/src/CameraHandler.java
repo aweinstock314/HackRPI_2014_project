@@ -21,8 +21,8 @@ public class CameraHandler implements MouseWheelListener, KeyListener
     public int lookdown = KeyEvent.VK_K;
     public int lookleft = KeyEvent.VK_J;
     public int lookright = KeyEvent.VK_L;
-    float x, y, z;
-    float theta, phi;
+    public float x, y, z;
+    public float theta, phi;
     public void apply(GL2 gl2)
     {
         gl2.glRotatef(rad2deg(phi), 1, 0, 0);

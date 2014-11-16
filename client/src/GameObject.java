@@ -7,4 +7,8 @@ public class GameObject {
     public GameObject() {
         actors = new Hashtable<Long,DrawObject>();
     }
+
+    public DrawObject getPlayer() {
+        return actors.get(-1);
+    }
 }

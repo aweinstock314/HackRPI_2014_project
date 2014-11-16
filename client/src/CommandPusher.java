@@ -64,7 +64,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     }
 
     //establish protocol here
-    public void sendData(String data, double value) {
+    public void sendData(String data, float value) {
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();
@@ -88,7 +88,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
     }
 
     //fix sending of orientation...
-    public void sendOrientation(double delth, double delph) {
+    public void sendOrientation(float delth, float delph) {
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();

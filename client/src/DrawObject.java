@@ -4,29 +4,45 @@ import javax.media.opengl.GL2;
 import org.json.simple.*;
 
 public class DrawObject {
-    public double x;
-    public double y;
-    public double z;
-    public double theta;
-    public double phi;
+    public float x;
+    public float y;
+    public float z;
+    public float theta;
+    public float phi;
     public String type;
-    public boolean isPlayer;
+    private boolean isPlayer;
+    private CameraHandler ch;
 
-    public DrawObject(double x, double y,double z, double th, double ph,String type) {
+    public DrawObject(float x, float y,float z, float th, float ph,String type, boolean player, CameraHandler ch) {
         setPosition(x,y,z);
         setOrientation(th,ph);
         this.type = type;
+        isPlayer = player;
+        if(isPlayer) {
+            this.ch = ch;
+        } else { 
+            ch = null;
+        }
     }
 
-    public void setPosition(double x,double y,double z) {
+    public void setPosition(float x,float y,float z) {
         this.x = x;
         this.y = y;
         this.z = z;
+        if(isPlayer) {
+            ch.x = x;
+            ch.y = y;
+            ch.z = z;
+        }
     }
 
-    public void setOrientation(double th, double ph) {
+    public void setOrientation(float th, float ph) {
         theta = th;
         phi = ph;
+        if(isPlayer) {
+            ch.theta = th;
+            ch.phi = ph;
+        }
     }
 
     public void draw(GL2 gl2, JSONArray model) {

@@ -7,10 +7,13 @@ import javax.swing.JFrame;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
-public class ModelViewer extends AbstractGLWindow
+public class ClientPanel extends AbstractGLWindow
 {
-    public JSONArray model = null;
-    public CameraHandler cameraHandler = new CameraHandler();
+    public JSONArray playerModel = null;
+    public JSONArray bulletModel = null;
+    private GameObject go;
+
+    public CameraHandler cameraHandler;
 
     public void setProjection(GL2 gl2, float width, float height)
     {
@@ -29,23 +32,30 @@ public class ModelViewer extends AbstractGLWindow
         GL2 gl2 = drawable.getGL().getGL2();
         setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
-        gl2.glBegin(gl2.GL_TRIANGLES);
-        if(model != null) for(int i=0; i<(model.size()/3); i+=3)
-        {
-            gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
-            gl2.glVertex3d(((Number)model.get(i)).floatValue(), ((Number)model.get(i+1)).floatValue(), ((Number)model.get(i+2)).floatValue());
+        for(DrawObject dO : go.actors.values()) {
+            if(dO.type == "Player") {
+                dO.draw(gl2,playerModel);
+            } else if(dO.type == "Bullet") {
+                dO.draw(gl2,bulletModel);
+            }
         }
-        gl2.glEnd();
     }
     public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged) {}
     public void init(GLAutoDrawable drawable) {}
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}
     public void dispose(GLAutoDrawable drawable) {}
 
-    public ModelViewer(int w, int h)
+    public ClientPanel(int w, int h, GameObject go, CommandPusher cp, CameraHandler ch)
     {
         constructorAux(w, h, 5);
-        try { model = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
+        this.go = go;
+        cameraHandler = ch;
+        addMouseMotionListener(cp);
+        addKeyListener(cp);
+        addMouseListener(cp);
+        try { bulletModel = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
+        catch(Exception e) { e.printStackTrace(); }
+        try { playerModel = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
         catch(Exception e) { e.printStackTrace(); }
     }
     public static void main(String[] args)
