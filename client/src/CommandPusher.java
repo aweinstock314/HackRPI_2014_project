@@ -68,12 +68,12 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();
-        cmd.put("\"variant\"", "\"" + data + "\"");
+        cmd.put("variant",data);
         JSONArray valueArray = new JSONArray();
         valueArray.add(value);
-        cmd.put("\"fields\"",valueArray);
-        obj.put("\"command\"",cmd);
-        obj.put("\"timestamp\"",timestamp);
+        cmd.put("fields",valueArray);
+        obj.put("command",cmd);
+        obj.put("timestamp",timestamp);
         out.println(obj.toString());
     }
 
@@ -81,9 +81,9 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();
-        cmd.put("\"variant\"", "\"" + signalType + "\"");
-        obj.put("\"command\"",cmd);
-        obj.put("\"timestamp\"",timestamp);
+        cmd.put("variant",signalType);
+        obj.put("command",cmd);
+        obj.put("timestamp",timestamp);
         out.println(obj.toString());
     }
 
@@ -92,15 +92,15 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();
-        cmd.put("\"variant\"", "\"RotateCamera\"");
+        cmd.put("variant", "RotateCamera");
         JSONArray valueArray = new JSONArray();
         JSONObject valueObj = new JSONObject();
-        valueObj.put("\"_field0\"",delth);
-        valueObj.put("\"_field1\"",delph);
+        valueObj.put("_field0",delth);
+        valueObj.put("_field1",delph);
         valueArray.add(valueObj);
-        cmd.put("\"fields\"",valueArray);
-        obj.put("\"command\"",cmd);
-        obj.put("\"timestamp\"",timestamp);
+        cmd.put("fields",valueArray);
+        obj.put("command",cmd);
+        obj.put("timestamp",timestamp);
         out.println(obj.toString());
     }
 
