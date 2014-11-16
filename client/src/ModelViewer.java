@@ -61,7 +61,7 @@ public class ModelViewer extends AbstractGLWindow
         try { saai = new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream()); }
         catch(Exception e) { e.printStackTrace(); }
         GLCanvas glcanv = constructorAux(w, h, 5);
-        glcanv.addKeyListener(mv.cameraHandler);
+        glcanv.addKeyListener(cameraHandler);
         glcanv.addKeyListener(saai);
         glcanv.requestFocus();
         try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
