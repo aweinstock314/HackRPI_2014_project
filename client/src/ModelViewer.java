@@ -45,7 +45,7 @@ public class ModelViewer extends AbstractGLWindow
     public ModelViewer(int w, int h)
     {
         constructorAux(w, h, 5);
-        try { model = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
+        try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         catch(Exception e) { e.printStackTrace(); }
     }
     public static void main(String[] args)
