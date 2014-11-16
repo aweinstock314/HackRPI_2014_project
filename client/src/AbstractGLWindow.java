@@ -26,10 +26,10 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
         add(glcanv);
         glcanv.addGLEventListener(this);
         glcanv.setBounds(0, 0, w, h);
-        CommandPusher cp = new CommandPusher(new PrintWriter(System.out, true));
-        glcanv.addKeyListener(cp);
-        glcanv.addMouseMotionListener(cp);
-        glcanv.requestFocus();
+        //CommandPusher cp = new CommandPusher(new PrintWriter(System.out, true));
+        //glcanv.addKeyListener(cp);
+        //glcanv.addMouseMotionListener(cp);
+        //glcanv.requestFocus();
         new FPSAnimator(glcanv, fps).start();
     }
     public static JFrame do_main(AbstractGLWindow aglw)
