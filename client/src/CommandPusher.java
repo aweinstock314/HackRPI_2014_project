@@ -36,7 +36,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
 
     //send a shoot command
     public void shoot() {
-        sendSignal("Shoot");
+        sendSignal("\"Shoot\"");
     }
 
     public void jump() {
@@ -74,10 +74,14 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         cmd.put("fields",valueArray);
         obj.put("command",cmd);
         obj.put("timestamp",timestamp);
-        out.println(obj.toString());
+        out.println(cmd.toString());
     }
 
     public void sendSignal(String signalType) {
+        System.out.println(signalType);
+        out.println(signalType);
+        out.flush();
+        /*
         long timestamp = System.currentTimeMillis();
         JSONObject obj = new JSONObject();
         JSONObject cmd = new JSONObject();
@@ -85,6 +89,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         obj.put("command",cmd);
         obj.put("timestamp",timestamp);
         out.println(obj.toString());
+        */
     }
 
     //fix sending of orientation...
@@ -101,7 +106,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         cmd.put("fields",valueArray);
         obj.put("command",cmd);
         obj.put("timestamp",timestamp);
-        out.println(obj.toString());
+        out.println(cmd.toString());
     }
 
     public void mouseMoved(MouseEvent e) {
