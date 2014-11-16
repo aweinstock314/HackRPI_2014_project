@@ -2,10 +2,15 @@ package client;
 import java.io.*;
 import java.awt.event.*;
 import java.util.*;
+import org.json.simple.*;
 
 public class CommandPusher extends java.util.TimerTask implements KeyListener,MouseMotionListener,MouseListener {
+
     public int velocity;
     
+    private int cur_mouse_x;
+    private int cur_mouse_y;
+
     PrintWriter out;
 
     private HashSet<Integer> pressedKeys;
@@ -46,15 +51,48 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
 
     //establish protocol here
     public void sendData(String data, double value) {
-        out.print(data);
+        long timestamp = System.currentTimeMillis();
+        JSONObject obj = new JSONObject();
+        JSONObject cmd = new JSONObject();
+        cmd.put("\"variant\"", "\"" + data + "\"");
+        JSONArray valueArray = new JSONArray();
+        valueArray.add(value);
+        cmd.put("\"fields\"",valueArray);
+        obj.put("\"command\"",cmd);
+        obj.put("\"timestamp\"",timestamp);
+        out.print(obj.toString());
     }
 
     public void sendSignal(String signalType) {
+        long timestamp = System.currentTimeMillis();
+        JSONObject obj = new JSONObject();
+        JSONObject cmd = new JSONObject();
+        cmd.put("\"variant\"", "\"" + data + "\"");
+        obj.put("\"command\"",cmd);
+        obj.put("\"timestamp\"",timestamp);
+        out.print(obj.toString());
+    }
+
+    //fix sending of orientation...
+    public void sendOrientation(double delth, double delph) {
+        long timestamp = System.currentTimeMillis();
+        JSONObject obj = new JSONObject();
+        JSONObject cmd = new JSONObject();
+        cmd.put("\"variant\"", "\"RotateCamera\"");
+        JSONArray valueArray = new JSONArray();
+        valueArray.add(value);
+        cmd.put("\"fields\"",valueArray);
+        obj.put("\"command\"",cmd);
+        obj.put("\"timestamp\"",timestamp);
+        out.print(obj.toString());
+
 
     }
 
     public void mouseMoved(MouseEvent e) {
-        System.out.println("Moved mouse");
+        sendOrientation(e.getX()-cur_mouse_x,e.getY()-cur_mouse_y);
+        cur_mouse_x = e.getX();
+        cur_mouse_y = e.getY();
     }
     
     public void mouseDragged(MouseEvent e) {}

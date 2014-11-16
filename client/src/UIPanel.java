@@ -9,5 +9,6 @@ public class UIPanel extends JPanel {
         Drawer dr = new Drawer(go,this);
         addKeyListener(cp);
         addMouseMotionListener(cp);
+        addMouseListener(cp);
     }
 }
