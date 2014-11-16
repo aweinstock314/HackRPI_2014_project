@@ -27,7 +27,7 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
         glcanv.setBounds(0, 0, w, h);
         new FPSAnimator(glcanv, fps).start();
     }
-    public static void do_main(AbstractGLWindow aglw)
+    public static JFrame do_main(AbstractGLWindow aglw)
     {
         JFrame jf = new JFrame();
         jf.setSize(WIDTH, HEIGHT);
@@ -36,5 +36,6 @@ public abstract class AbstractGLWindow extends JPanel implements GLEventListener
         jf.setLayout(null);
         jf.add(aglw);
         jf.setVisible(true);
+        return jf;
     }
 }
