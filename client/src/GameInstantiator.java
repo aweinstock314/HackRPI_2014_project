@@ -14,9 +14,12 @@ public class GameInstantiator {
         GameObject go = new GameObject();
         CommandPusher cp = new CommandPusher(tc.getWriter());
         JFrame jf = new JFrame();
+        jf.setLayout(null);
         cp.shoot();
         CameraHandler ch = new CameraHandler();
         ClientPanel panel = new ClientPanel(500,500, go, cp,ch);
+        jf.setSize(500,500);
+        jf.setResizable(false);
         jf.setContentPane(panel);
         jf.pack();
         jf.setVisible(true);

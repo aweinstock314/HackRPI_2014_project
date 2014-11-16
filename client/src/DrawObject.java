@@ -49,9 +49,11 @@ public class DrawObject {
         System.out.println("x: " + Float.toString(x));
         System.out.println("y: " + Float.toString(y));
         System.out.println("z: " + Float.toString(z));
+        System.out.println();
         if(isPlayer) return;
         gl2.glBegin(gl2.GL_TRIANGLES);
         for(int i = 0; i < (model.size()/3); i++) {
+            gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
             gl2.glVertex3d(((Number)model.get(i)).floatValue() + x, ((Number)model.get(i+1)).floatValue() + y, ((Number)model.get(i+2)).floatValue() + z);
         }
         gl2.glEnd();

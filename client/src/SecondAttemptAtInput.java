@@ -67,8 +67,8 @@ public class SecondAttemptAtInput implements KeyListener
         System.out.println(x);
     }
     public void emitShoot() {
-        ps.println("Shoot");
-        System.out.println("Shoot");
+        ps.println("\"Shoot\"");
+        System.out.println("\"Shoot\"");
     }
     public void emitRotateCamera(float theta, float phi) {
         JSONObject x = new JSONObject();
