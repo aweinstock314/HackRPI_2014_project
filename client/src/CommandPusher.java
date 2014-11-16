@@ -7,7 +7,7 @@ import java.awt.*;
 
 public class CommandPusher extends java.util.TimerTask implements KeyListener,MouseMotionListener,MouseListener {
 
-    public int velocity;
+    public float velocity = .1f;
     
     private int cur_mouse_x;
     private int cur_mouse_y;
