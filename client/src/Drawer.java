@@ -14,5 +14,7 @@ public class Drawer extends java.util.TimerTask {
 
     //Draw current game state using OpenGL
     public void run() {
+
+
     }
 }

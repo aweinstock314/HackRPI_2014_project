@@ -1,7 +1,9 @@
 package client;
 import java.io.*;
+import java.net.*;
+import java.util.*;
 
-public class ServerSyncer implements TimerTask {
+public class ServerSyncer extends TimerTask {
 
     private BufferedReader in;
     private GameObject go;
@@ -9,9 +11,11 @@ public class ServerSyncer implements TimerTask {
     public ServerSyncer(BufferedReader br, GameObject go) {
         this.in = br;
         this.go = go;
+    }
+    public void run() {
         try {
             while(true) {
-                String initialString = in.readline();
+                String initialString = in.readLine();
                 parse(initialString);
             }
         } catch(IOException e) {

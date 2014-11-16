@@ -2,11 +2,9 @@ package client;
 import java.util.*;
 
 public class GameObject {
-    private ArrayList<Player> players;
-    private ArrayList<Bullet> bullets;
+    public ArrayList<DrawObject> actors;
 
     public GameObject() {
-        players = new ArrayList<Player>();
-        bullets = new ArrayList<Bullet>();
+        actors = new ArrayList<DrawObject>();
     }
 }

@@ -34,7 +34,7 @@ public class ThreadClient {
         try {
             while(true) {
                 String initialString = in.readLine();
-                Object obj = JSONValue.parse(initialString);
+                //Object obj = JSONValue.parse(initialString);
                 //JSONArray array = (JSONArray)obj;
                 System.out.println(initialString);
             }
