@@ -8,7 +8,7 @@ public class GameInstantiator {
     public static void main(String[] args) {
         //instantiate game object later
 
-        ThreadClient tc = new ThreadClient("localhost"/*"129.161.91.206"*/,51701);
+        ThreadClient tc = new ThreadClient("129.161.91.206",51701);
         tc.getWriter().print("{}");
 
         GameObject go = new GameObject();
