@@ -4,6 +4,9 @@ use serialize::json;
 use std::io::{TcpListener, TcpStream};
 use std::io::{Acceptor, Listener};
 
+// hack around cargo not respecting "proper" link attributes
+#[link(name = "ode")] extern {}
+mod ode_bindgen;
 
 #[deriving(Encodable, Decodable)]
 //pub struct Position { x: f64, y: f64, z: f64 }
@@ -78,6 +81,7 @@ fn show_examples(mut stream: TcpStream) {
 // contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
 fn main() {
     println!("current time: {}", time::get_time());
+    println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
     //let listener = TcpListener::bind("127.0.0.1:51701"); //large number for port chosen pseudorandomly
     let listener = TcpListener::bind("0.0.0.0:51701"); //large number for port chosen pseudorandomly
 
