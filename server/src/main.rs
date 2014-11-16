@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::{Vacant, Occupied};
 use std::sync::{Mutex, Arc};
 use std::num::FloatMath;
+use std::ops::Add;
 
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = std::f64::consts::PI_2;
@@ -22,6 +23,14 @@ pub struct Position (f64, f64, f64);
 #[deriving(Encodable, Decodable, Clone, Show)]
 //pub struct Orientation { theta: f64, phi: f64 }
 pub struct Orientation (f64, f64);
+
+impl Add<Orientation, Orientation> for Orientation {
+    fn add(&self, other: &Orientation) -> Orientation {
+        let Orientation(t1, p1) = *self;
+        let Orientation(t2, p2) = *other;
+        Orientation(t1+t2, p1+p2)
+    }
+}
 
 #[deriving(Encodable, Decodable, Clone)]
 pub enum PlayerCommand {
@@ -168,17 +177,22 @@ fn manage_world(mut world: HashMap<int, GameObject>,
             MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
                 let player = &mut get_player(&mut world, playerid, broadcast.clone());
-                player.pos = apply_polar_movement(player.pos, delta, 0.0);
+                let Orientation(theta, _) = player.ori;
+                player.pos = apply_polar_movement(player.pos, delta, theta);
                 println!("P#{} pos: {}", playerid, player.pos);
             }
             MoveSideways(delta) => {
                 println!("Player #{} moves {} units to their right", playerid, delta);
                 let player = &mut get_player(&mut world, playerid, broadcast.clone());
-                player.pos = apply_polar_movement(player.pos, delta, PI/2.0);
+                let Orientation(theta, _) = player.ori;
+                player.pos = apply_polar_movement(player.pos, delta, theta + PI/2.0);
                 println!("P#{} pos: {}", playerid, player.pos);
             }
             RotateCamera(Orientation(theta, phi)) => {
                 println!("Player #{} rotates by ({}, {})", playerid, theta, phi);
+                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                player.ori = player.ori + Orientation(theta, phi);
+                println!("P#{} ori: {}", playerid, player.ori);
             }
             Shoot => { println!("Player #{} shoots", playerid); }
         }
