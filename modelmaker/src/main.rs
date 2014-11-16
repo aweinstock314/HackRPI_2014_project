@@ -6,11 +6,13 @@ use std::io::File;
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = std::f64::consts::PI_2;
 
+fn putpoint(v: &mut Vec<f64>, (x, y, z): (f64, f64, f64)) { v.push(x); v.push(y); v.push(z); }
+fn puttri(v: &mut Vec<f64>, p1: (f64, f64, f64), p2: (f64, f64, f64), p3: (f64, f64, f64)) {
+    putpoint(v, p1); putpoint(v, p2); putpoint(v, p3);
+}
 // direct transcription from https://github.com/aweinstock314/correspondence_problem_demo/blob/master/correspondence_problem_demo_main.cpp
 fn make_sphereoid(xz_sides: uint, phi_sides: uint, radius: f64) -> Vec<f64> {
     let mut rv = Vec::new();
-    let putpoint = |v: &mut Vec<f64>, (x, y, z)| { v.push(x); v.push(y); v.push(z); };
-    let puttri = |v: &mut Vec<f64>, p1, p2, p3| { putpoint(v, p1); putpoint(v, p2); putpoint(v, p3); };
     let (xzs, ps) = (xz_sides as f64, phi_sides as f64);
     for i1 in range(0, xz_sides) {
         for i2 in range(0, phi_sides) {
@@ -29,8 +31,32 @@ fn make_sphereoid(xz_sides: uint, phi_sides: uint, radius: f64) -> Vec<f64> {
     rv
 }
 
+fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
+    let mut rv = Vec::new();
+    let xzs = xz_sides as f64;
+    for ixz in range(0, xz_sides) {
+        let fxz = ixz as f64;
+        let (theta1, theta2) = ((TAU * fxz) / xzs, (TAU * (fxz+1.)) / xzs);
+        let (x1, z1) = (theta1.cos(), theta1.sin());
+        let (x2, z2) = (theta2.cos(), theta2.sin());
+        let p1 = (x1, 0.0, z1);
+        let p2 = (x1, height, z1);
+        let p3 = (x2, height, z2);
+        let p4 = (x2, 0.0, z2);
+        puttri(&mut rv, p1, p2, p3);
+        puttri(&mut rv, p3, p4, p1);
+        let c0 = (0.0, 0.0, 0.0);
+        let ch = (0.0, height, 0.0);
+        puttri(&mut rv, p1, c0, p4);
+        puttri(&mut rv, p2, ch, p3);
+    }
+    rv
+}
+
 fn main() {
     let unit_sphere = make_sphereoid(50, 50, 1.0);
+    let unit_cylinder = make_cylinder(25, 1.0, 1.0);
     File::create(&Path::new("unit_sphere.json")).write_line(json::encode(&unit_sphere).as_slice());
+    File::create(&Path::new("unit_cylinder.json")).write_line(json::encode(&unit_cylinder).as_slice());
     //println!("{}", json::encode(&unit_sphere));
 }
