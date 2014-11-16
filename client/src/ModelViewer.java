@@ -19,7 +19,7 @@ public class ModelViewer extends AbstractGLWindow
     {
         gl2.glMatrixMode(gl2.GL_PROJECTION);
         gl2.glLoadIdentity();
-        gl2.glOrtho(-width, width, -height, height, 1, -1);
+        gl2.glOrtho(-width, width, -height, height, 1, -4);
         cameraHandler.apply(gl2);
         //gl2.glRotatef(xrot, 1, 0, 0);
         //gl2.glRotatef(yrot, 0, 1, 0);
@@ -27,10 +27,21 @@ public class ModelViewer extends AbstractGLWindow
         //gl2.glTranslatef(-xpos, -ypos, -zpos);
     }
 
+    public void setPerspectiveProjection(GL2 gl2)
+    {
+        gl2.glMatrixMode(gl2.GL_PROJECTION);
+        gl2.glLoadIdentity();
+        gl2.glFrustum(-1, 1, -1, 1, .5, 100);
+        gl2.glMatrixMode(gl2.GL_MODELVIEW);
+        gl2.glLoadIdentity();
+        cameraHandler.apply(gl2);
+    }
+
     public void display(GLAutoDrawable drawable)
     {
         GL2 gl2 = drawable.getGL().getGL2();
-        setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
+        //setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
+        setPerspectiveProjection(gl2);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
         gl2.glBegin(gl2.GL_TRIANGLES);
         if(model != null) for(int i=0; i<(model.size()/3); i+=3)
@@ -50,6 +61,7 @@ public class ModelViewer extends AbstractGLWindow
         try { saai = new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream()); }
         catch(Exception e) { e.printStackTrace(); }
         GLCanvas glcanv = constructorAux(w, h, 5);
+        glcanv.addKeyListener(mv.cameraHandler);
         glcanv.addKeyListener(saai);
         glcanv.requestFocus();
         try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }

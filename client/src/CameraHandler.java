@@ -27,9 +27,9 @@ public class CameraHandler implements MouseWheelListener, KeyListener
     public float theta, phi;
     public void apply(GL2 gl2)
     {
-        gl2.glRotatef(rad2deg(phi), 1, 0, 0);
+        gl2.glRotatef(rad2deg(phi), -1, 0, 0);
         gl2.glRotatef(rad2deg(theta), 0, 1, 0);
-        gl2.glTranslatef(-x, -y, -z);
+        gl2.glTranslatef(-x, -y, z);
     }
     public CameraHandler()
     {
