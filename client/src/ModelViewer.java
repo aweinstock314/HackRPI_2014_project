@@ -50,7 +50,6 @@ public class ModelViewer extends AbstractGLWindow implements MouseWheelListener
         //System.out.printf("(%f, %f)\n", widthScale, heightScale);
     }
 
-
     public ModelViewer(int w, int h)
     {
         constructorAux(w, h, 1);
