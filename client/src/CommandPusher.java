@@ -31,7 +31,7 @@ public class CommandPusher extends java.util.TimerTask implements KeyListener,Mo
         
         pressedKeys = new HashSet<Integer>();
         Timer tim = new Timer();
-        tim.schedule(this,0);
+        tim.schedule(this,0,20);
     }
 
     //send a shoot command
