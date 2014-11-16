@@ -1,15 +1,17 @@
 package client;
 
-public abstract class DrawObject {
+public class DrawObject {
     public double x;
     public double y;
     public double z;
     public double theta;
     public double phi;
+    public String type;
 
-    public DrawObject(double x, double y,double z, double th, double ph) {
+    public DrawObject(double x, double y,double z, double th, double ph,String type) {
         setPosition(x,y,z);
         setOrientation(th,ph);
+        this.type = type;
     }
 
     public void setPosition(double x,double y,double z) {

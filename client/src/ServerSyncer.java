@@ -2,6 +2,7 @@ package client;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import org.json.simple.*;
 
 public class ServerSyncer extends TimerTask {
 
@@ -27,29 +28,30 @@ public class ServerSyncer extends TimerTask {
         Object obj = JSONValue.parse(jsonString);
         JSONObject jsobj = (JSONObject)obj;
         JSONObject cmd = (JSONObject)jsobj.get(1);
-        String cmdType = cmd.get("variant");
+        String cmdType = (String)cmd.get("variant");
         JSONArray fields = (JSONArray)cmd.get("fields");
-        int i = fields.get(0);
+        int i = (Integer)fields.get(0);
         if(cmdType == "SetPosition") {
-            JSONObject posData = (JSONObject)files.get(1);
-            double x = posData.get("_field0");
-            double y = posData.get("_field1");
-            double z = posData.get("_field2");
+            JSONObject posData = (JSONObject)fields.get(1);
+            double x = (Double)posData.get("_field0");
+            double y = (Double)posData.get("_field1");
+            double z = (Double)posData.get("_field2");
             go.actors.get(i).setPosition(x,y,z);
         } else if(cmdType == "SetOrientation") {
-            JSONObject orData = (JSONObject)files.get(1);
-            double th = orData.get("_field0");
-            double ph = orData.get("_field1");
+            JSONObject orData = (JSONObject)fields.get(1);
+            double th = (Double)orData.get("_field0");
+            double ph = (Double)orData.get("_field1");
             go.actors.get(i).setOrientation(th,ph);
         } else if(cmdType == "AddObject") {
-            JSONObject posData = (JSONObject)files.get(1);
-            double x = posData.get("_field0");
-            double y = posData.get("_field1");
-            double z = posData.get("_field2");
-            JSONObject orData = (JSONObject)files.get(1);
-            double th = orData.get("_field0");
-            double ph = orData.get("_field1");
-            go.actors.put(i,new DrawObject(x,y,z,th,ph));
+            JSONObject posData = (JSONObject)fields.get(1);
+            double x = (Double)posData.get("_field0");
+            double y = (Double)posData.get("_field1");
+            double z = (Double)posData.get("_field2");
+            JSONObject orData = (JSONObject)fields.get(1);
+            double th = (Double)orData.get("_field0");
+            double ph = (Double)orData.get("_field1");
+            String type = (String)fields.get(2);
+            go.actors.put(i,new DrawObject(x,y,z,th,ph,type));
         } else if(cmdType == "RemoveObject") {
             go.actors.remove(i);
         }
