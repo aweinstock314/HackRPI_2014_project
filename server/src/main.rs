@@ -6,16 +6,20 @@ use std::io::{Acceptor, Listener};
 use std::collections::HashMap;
 use std::collections::hash_map::{Vacant, Occupied};
 use std::sync::{Mutex, Arc};
+use std::num::FloatMath;
+
+static PI: f64 = std::f64::consts::PI;
+static TAU: f64 = std::f64::consts::PI_2;
 
 // hack around cargo not respecting "proper" link attributes
 #[link(name = "ode")] extern {}
 mod ode_bindgen;
 
-#[deriving(Encodable, Decodable, Clone)]
+#[deriving(Encodable, Decodable, Clone, Show)]
 //pub struct Position { x: f64, y: f64, z: f64 }
 pub struct Position (f64, f64, f64);
 
-#[deriving(Encodable, Decodable, Clone)]
+#[deriving(Encodable, Decodable, Clone, Show)]
 //pub struct Orientation { theta: f64, phi: f64 }
 pub struct Orientation (f64, f64);
 
@@ -150,6 +154,11 @@ fn get_player(world: &mut HashMap<int, GameObject>,
     player
 }
 
+fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
+    let Position(x, y, z) = pos;
+    Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
+}
+
 fn manage_world(mut world: HashMap<int, GameObject>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(int, PlayerCommand)>) {
@@ -158,9 +167,15 @@ fn manage_world(mut world: HashMap<int, GameObject>,
         match action {
             MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
+                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                player.pos = apply_polar_movement(player.pos, delta, 0.0);
+                println!("P#{} pos: {}", playerid, player.pos);
             }
             MoveSideways(delta) => {
                 println!("Player #{} moves {} units to their right", playerid, delta);
+                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                player.pos = apply_polar_movement(player.pos, delta, PI/2.0);
+                println!("P#{} pos: {}", playerid, player.pos);
             }
             RotateCamera(Orientation(theta, phi)) => {
                 println!("Player #{} rotates by ({}, {})", playerid, theta, phi);
