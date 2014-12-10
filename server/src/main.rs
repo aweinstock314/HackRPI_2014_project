@@ -20,6 +20,13 @@ mod ode_bindgen;
 //pub struct Position { x: f64, y: f64, z: f64 }
 pub struct Position (f64, f64, f64);
 
+impl Add<Position, Position> for Position {
+    fn add(&self, other: &Position) -> Position {
+        let Position(x1, y1, z1) = *self;
+        let Position(x2, y2, z2) = *other;
+        Position(x1 + x2, y1 + y2, z1 + z2)
+    }
+}
 #[deriving(Encodable, Decodable, Clone, Show)]
 //pub struct Orientation { theta: f64, phi: f64 }
 pub struct Orientation (f64, f64);
@@ -36,6 +43,7 @@ impl Add<Orientation, Orientation> for Orientation {
 pub enum PlayerCommand {
     MoveForward(f64),
     MoveSideways(f64),
+    MoveUp(f64), //possibly replace with "Jump" when transitioning to non-free-movement?
     RotateCamera(Orientation),
     Shoot,
 }
@@ -174,14 +182,21 @@ fn manage_world(mut world: HashMap<int, GameObject>,
                 println!("Player #{} moves {} units forward", playerid, delta);
                 let player = &mut get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, theta);
+                player.pos = apply_polar_movement(player.pos, delta, theta + PI/2.0);
                 println!("P#{} pos: {}", playerid, player.pos);
             }
             MoveSideways(delta) => {
                 println!("Player #{} moves {} units to their right", playerid, delta);
                 let player = &mut get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, theta + PI/2.0);
+                player.pos = apply_polar_movement(player.pos, delta, theta);
+                println!("P#{} pos: {}", playerid, player.pos);
+            }
+            MoveUp(delta) => {
+                println!("Player #{} moves {} units up", playerid, delta);
+                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                let Orientation(theta, _) = player.ori;
+                player.pos = player.pos + Position(0.0, delta, 0.0);
                 println!("P#{} pos: {}", playerid, player.pos);
             }
             RotateCamera(Orientation(theta, phi)) => {

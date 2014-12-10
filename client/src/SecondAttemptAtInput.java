@@ -40,8 +40,8 @@ public class SecondAttemptAtInput implements KeyListener
 
             case moveforward: emitMoveForward(move_delta); break;
             case movebackward: emitMoveForward(-move_delta); break;
-            case movedown: break;
-            case moveup: break;
+            case movedown: emitMoveUp(-move_delta); break;
+            case moveup: emitMoveUp(move_delta); break;
             case moveleft: emitMoveSideways(-move_delta); break;
             case moveright: emitMoveSideways(move_delta); break;
             case shoot: emitShoot(); break;
@@ -60,6 +60,15 @@ public class SecondAttemptAtInput implements KeyListener
     public void emitMoveSideways(float delta) {
         JSONObject x = new JSONObject();
         x.put("variant", "MoveSideways");
+        JSONArray y = new JSONArray();
+        y.add(delta);
+        x.put("fields", y);
+        ps.println(x);
+        System.out.println(x);
+    }
+    public void emitMoveUp(float delta) {
+        JSONObject x = new JSONObject();
+        x.put("variant", "MoveUp");
         JSONArray y = new JSONArray();
         y.add(delta);
         x.put("fields", y);
