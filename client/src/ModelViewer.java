@@ -14,7 +14,7 @@ public class ModelViewer extends AbstractGLWindow
     public JSONArray model = null;
     public CameraHandler cameraHandler = new CameraHandler();
     public SecondAttemptAtInput saai = null;
-    public KeyListenerSmoother smoother = new KeyListenerSmoother(25);
+    public KeyListenerSmoother smoother = new KeyListenerSmoother(10);
 
     public void setProjection(GL2 gl2, float width, float height)
     {
@@ -81,6 +81,7 @@ public class ModelViewer extends AbstractGLWindow
         glcanv.addKeyListener(smoother);
         glcanv.requestFocus();
         try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
+        //try { model = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
         catch(Exception e) { e.printStackTrace(); }
     }
     public static void main(String[] args)

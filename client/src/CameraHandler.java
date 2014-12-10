@@ -6,23 +6,10 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import javax.media.opengl.GL2;
 
-public class CameraHandler implements MouseWheelListener, KeyListener
+public class CameraHandler extends Abstract3DKeyListener implements MouseWheelListener
 {
-    float move_delta = (float)0.1;
-    float rotate_delta = (float)0.1;
-
     float widthScale = 1;
     float heightScale = 1;
-    public static final int moveforward = KeyEvent.VK_W;
-    public static final int movebackward = KeyEvent.VK_S;
-    public static final int moveup = KeyEvent.VK_E;
-    public static final int movedown = KeyEvent.VK_Q;
-    public static final int moveleft = KeyEvent.VK_A;
-    public static final int moveright = KeyEvent.VK_D;
-    public static final int lookup = KeyEvent.VK_I;
-    public static final int lookdown = KeyEvent.VK_K;
-    public static final int lookleft = KeyEvent.VK_J;
-    public static final int lookright = KeyEvent.VK_L;
     public float x, y, z;
     public float theta, phi;
     public void apply(GL2 gl2)
@@ -53,28 +40,21 @@ public class CameraHandler implements MouseWheelListener, KeyListener
         z += m*Math.sin(rot_theta);
     }
 
-    public void keyPressed(KeyEvent e) {
-        //System.out.println(e.getKeyCode());
-        switch(e.getKeyCode()) {
-            case lookleft: theta += rotate_delta; break;
-            case lookright: theta -= rotate_delta; break;
-            case lookdown: phi -= rotate_delta; break;
-            case lookup: phi += rotate_delta; break;
+    void lookLeft() { theta += rotate_delta; }
+    void lookRight() { theta -= rotate_delta; }
+    void lookDown() { phi -= rotate_delta; }
+    void lookUp() { phi += rotate_delta; }
+    void moveForward() { do_polar_movement(move_delta, .25); }
+    void moveBackward() { do_polar_movement(move_delta, .75); }
+    void moveDown() { y -= move_delta; }
+    void moveUp() { y += move_delta; }
+    void moveLeft() { do_polar_movement(move_delta, .5); }
+    void moveRight() { do_polar_movement(move_delta, 0.0); }
 
-            case moveforward: do_polar_movement(move_delta, .25); break;
-            case movebackward: do_polar_movement(move_delta, .75); break;
-            case movedown: y -= move_delta; break;
-            case moveup: y += move_delta; break;
-            case moveleft: do_polar_movement(move_delta, .5); break;
-            case moveright: do_polar_movement(move_delta, 0.0); break;
-            default:
-        }
-        //System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
-        //System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
-    }
+    void shoot() {}
+
+    //System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
+    //System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
 
     float rad2deg(float x) { return (float)((x * 180)/Math.PI); }
-
-    public void keyTyped(KeyEvent e) {}
-    public void keyReleased(KeyEvent e) {} 
 }

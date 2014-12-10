@@ -9,45 +9,28 @@ import java.io.PrintStream;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class SecondAttemptAtInput implements KeyListener
+public class SecondAttemptAtInput extends Abstract3DKeyListener
 {
     PrintStream ps = null;
     public SecondAttemptAtInput(OutputStream os)
     {
         ps = new PrintStream(os);
     }
-    float move_delta = (float)0.01;
-    float rotate_delta = (float)0.001;
-    public static final int moveforward = KeyEvent.VK_W;
-    public static final int movebackward = KeyEvent.VK_S;
-    public static final int moveup = KeyEvent.VK_E;
-    public static final int movedown = KeyEvent.VK_Q;
-    public static final int moveleft = KeyEvent.VK_A;
-    public static final int moveright = KeyEvent.VK_D;
-    public static final int lookup = KeyEvent.VK_I;
-    public static final int lookdown = KeyEvent.VK_K;
-    public static final int lookleft = KeyEvent.VK_J;
-    public static final int lookright = KeyEvent.VK_L;
-    public static final int shoot = KeyEvent.VK_SPACE;
 
-    public void keyPressed(KeyEvent e) {
-        //System.out.println(e.getKeyCode());
-        switch(e.getKeyCode()) {
-            case lookleft: emitRotateCamera(-rotate_delta, 0); break;
-            case lookright: emitRotateCamera(rotate_delta, 0); break;
-            case lookdown: emitRotateCamera(0, -rotate_delta); break;
-            case lookup: emitRotateCamera(0, rotate_delta); break;
+    void lookLeft() { emitRotateCamera(-rotate_delta, 0); }
+    void lookRight() { emitRotateCamera(rotate_delta, 0); }
+    void lookDown() { emitRotateCamera(0, -rotate_delta); }
+    void lookUp() { emitRotateCamera(0, rotate_delta); }
 
-            case moveforward: emitMoveForward(move_delta); break;
-            case movebackward: emitMoveForward(-move_delta); break;
-            case movedown: emitMoveUp(-move_delta); break;
-            case moveup: emitMoveUp(move_delta); break;
-            case moveleft: emitMoveSideways(-move_delta); break;
-            case moveright: emitMoveSideways(move_delta); break;
-            case shoot: emitShoot(); break;
-            default:
-        }
-    }
+    void moveForward() { emitMoveForward(move_delta); }
+    void moveBackward() { emitMoveForward(-move_delta); }
+    void moveLeft() { emitMoveSideways(-move_delta); }
+    void moveRight() { emitMoveSideways(move_delta); }
+    void moveDown() { emitMoveUp(-move_delta); }
+    void moveUp() { emitMoveUp(move_delta); }
+
+    void shoot() { emitShoot(); }
+
     public void emitMoveForward(float delta) {
         JSONObject x = new JSONObject();
         x.put("variant", "MoveForward");
@@ -91,7 +74,4 @@ public class SecondAttemptAtInput implements KeyListener
         ps.println(x);
         System.out.println(x);
     }
-    public void keyReleased(KeyEvent e) {} 
-    public void keyTyped(KeyEvent e) {}
-    
 }
