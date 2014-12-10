@@ -69,8 +69,8 @@ public class CameraHandler implements MouseWheelListener, KeyListener
             case moveright: do_polar_movement(move_delta, 0.0); break;
             default:
         }
-        System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
-        System.out.printf("Current orientation: (%f, %f)\n", theta, phi);
+        //System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
+        //System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
     }
 
     float rad2deg(float x) { return (float)((x * 180)/Math.PI); }

@@ -16,8 +16,8 @@ public class SecondAttemptAtInput implements KeyListener
     {
         ps = new PrintStream(os);
     }
-    float move_delta = (float)0.1;
-    float rotate_delta = (float)0.1;
+    float move_delta = (float)0.01;
+    float rotate_delta = (float)0.001;
     public static final int moveforward = KeyEvent.VK_W;
     public static final int movebackward = KeyEvent.VK_S;
     public static final int moveup = KeyEvent.VK_E;
