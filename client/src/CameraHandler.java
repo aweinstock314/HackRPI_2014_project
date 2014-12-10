@@ -28,7 +28,7 @@ public class CameraHandler implements MouseWheelListener, KeyListener
     public void apply(GL2 gl2)
     {
         gl2.glRotatef(rad2deg(phi), -1, 0, 0);
-        gl2.glRotatef(rad2deg(theta), 0, 1, 0);
+        gl2.glRotatef(rad2deg(theta), 0, -1, 0);
         gl2.glTranslatef(-x, -y, z);
     }
     public CameraHandler()
@@ -56,8 +56,8 @@ public class CameraHandler implements MouseWheelListener, KeyListener
     public void keyPressed(KeyEvent e) {
         //System.out.println(e.getKeyCode());
         switch(e.getKeyCode()) {
-            case lookleft: theta -= rotate_delta; break;
-            case lookright: theta += rotate_delta; break;
+            case lookleft: theta += rotate_delta; break;
+            case lookright: theta -= rotate_delta; break;
             case lookdown: phi -= rotate_delta; break;
             case lookup: phi += rotate_delta; break;
 
