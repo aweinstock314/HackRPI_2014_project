@@ -10,8 +10,7 @@ public class CameraHandler extends Abstract3DKeyListener implements MouseWheelLi
 {
     float widthScale = 1;
     float heightScale = 1;
-    public float x, y, z;
-    public float theta, phi;
+
     public void apply(GL2 gl2)
     {
         gl2.glRotatef(rad2deg(phi), -1, 0, 0);
@@ -52,9 +51,4 @@ public class CameraHandler extends Abstract3DKeyListener implements MouseWheelLi
     void moveRight() { do_polar_movement(move_delta, 0.0); }
 
     void shoot() {}
-
-    //System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
-    //System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
-
-    float rad2deg(float x) { return (float)((x * 180)/Math.PI); }
 }
