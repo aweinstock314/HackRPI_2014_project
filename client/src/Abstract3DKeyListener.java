@@ -9,8 +9,8 @@ public abstract class Abstract3DKeyListener implements KeyListener
     protected float move_delta = (float)0.05;
     protected float rotate_delta = (float)0.05;
 
-    protected float x, y, z;
-    protected float theta, phi;
+    protected static float x, y, z;
+    protected static float theta, phi;
 
     public static final int k_moveforward = KeyEvent.VK_W;
     public static final int k_movebackward = KeyEvent.VK_S;
@@ -28,6 +28,7 @@ public abstract class Abstract3DKeyListener implements KeyListener
 
     public void keyPressed(KeyEvent e) {
         //System.out.println(e.getKeyCode());
+        boolean changed = true;
         switch(e.getKeyCode()) {
             case k_lookleft: lookLeft(); break;
             case k_lookright: lookRight(); break;
@@ -41,10 +42,13 @@ public abstract class Abstract3DKeyListener implements KeyListener
             case k_moveleft: moveLeft(); break;
             case k_moveright: moveRight(); break;
             case k_shoot: shoot(); break;
-            default:
+            default: changed = false; break;
         }
-        //System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
-        //System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
+        if(changed)
+        {
+            System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
+            System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
+        }
     }
     public void keyReleased(KeyEvent e) {}
     public void keyTyped(KeyEvent e) {}

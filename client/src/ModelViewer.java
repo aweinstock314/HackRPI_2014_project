@@ -75,8 +75,8 @@ public class ModelViewer extends AbstractGLWindow
     {
         try { saai = new SecondAttemptAtInput(new Socket("localhost", 51701).getOutputStream()); }
         catch(Exception e) { e.printStackTrace(); }
-        smoother.addKeyListener(cameraHandler);
         smoother.addKeyListener(saai);
+        smoother.addKeyListener(cameraHandler);
         GLCanvas glcanv = constructorAux(w, h, 5);
         glcanv.addKeyListener(smoother);
         glcanv.requestFocus();
