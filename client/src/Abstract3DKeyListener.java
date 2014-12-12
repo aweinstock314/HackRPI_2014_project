@@ -31,8 +31,8 @@ public abstract class Abstract3DKeyListener implements KeyListener
         switch(e.getKeyCode()) {
             case k_lookleft: lookLeft(); break;
             case k_lookright: lookRight(); break;
-            case k_lookdown: if(phi - rotate_delta >= -Math.PI) { lookDown(); } break;
-            case k_lookup: if(phi + rotate_delta <= Math.PI) { lookUp(); } break;
+            case k_lookdown: if(phi - rotate_delta >= -Math.PI/2) { lookDown(); } break;
+            case k_lookup: if(phi + rotate_delta <= Math.PI/2) { lookUp(); } break;
 
             case k_moveforward: moveForward(); break;
             case k_movebackward: moveBackward(); break;
