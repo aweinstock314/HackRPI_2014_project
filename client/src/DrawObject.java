@@ -12,17 +12,29 @@ public class DrawObject {
     public String type;
     private boolean isPlayer;
     private CameraHandler ch;
+    private JSONArray model;
 
-    public DrawObject(float x, float y,float z, float th, float ph,String type, boolean player, CameraHandler ch) {
+    // might be cleaner to have these as seperate classes, 
+    // rather than two constructors on the same class, with unused 
+    // fields
+
+    // player constructor
+    public DrawObject(float x, float y,float z, float th, float ph, String type, CameraHandler ch) {
         setPosition(x,y,z);
         setOrientation(th,ph);
         this.type = type;
-        isPlayer = player;
-        if(isPlayer) {
-            this.ch = ch;
-        } else { 
-            ch = null;
-        }
+        isPlayer = true;
+        this.ch = ch;
+        model = null; // TODO: players might need models for collision detection
+    }
+    // non-player constructor
+    public DrawObject(float x, float y,float z, float th, float ph, String type, JSONArray model) {
+        setPosition(x,y,z);
+        setOrientation(th,ph);
+        this.type = type;
+        isPlayer = false;
+        ch = null;
+        this.model = model;
     }
 
     public void setPosition(float x,float y,float z) {
@@ -45,16 +57,17 @@ public class DrawObject {
         }
     }
 
-    public void draw(GL2 gl2, JSONArray model) {
-        System.out.println("x: " + Float.toString(x));
-        System.out.println("y: " + Float.toString(y));
-        System.out.println("z: " + Float.toString(z));
-        System.out.println();
-        if(isPlayer) return;
+    public void draw(GL2 gl2) {
+        if(isPlayer || model == null) return;
+        //System.out.printf("Drawing an object at (%f, %f, %f)\n", x, y, z);
         gl2.glBegin(gl2.GL_TRIANGLES);
-        for(int i = 0; i < (model.size()/3); i++) {
+        for(int i = 0; i < (model.size()/3); i+=3) {
             gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
-            gl2.glVertex3d(((Number)model.get(i)).floatValue() + x, ((Number)model.get(i+1)).floatValue() + y, ((Number)model.get(i+2)).floatValue() + z);
+            //TODO: factor in rotation by (theta, phi)
+            gl2.glVertex3d(
+                ((Number)model.get(i)).floatValue() + x,
+                ((Number)model.get(i+1)).floatValue() + y,
+                ((Number)model.get(i+2)).floatValue() + z);
         }
         gl2.glEnd();
     }

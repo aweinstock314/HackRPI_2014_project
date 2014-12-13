@@ -26,6 +26,12 @@ public class ServerSyncer extends TimerTask {
         }
     }
 
+    private JSONArray getModel(String type) {
+        // TODO: model loading based on type of object
+        try { return (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
+        catch(Exception e) { e.printStackTrace(); return null; }
+    }
+
     private void parse(String jsonString) {
         try {
             System.out.println(jsonString);
@@ -57,7 +63,7 @@ public class ServerSyncer extends TimerTask {
                 float th = ((Number)orData.get("_field0")).floatValue();
                 float ph = ((Number)orData.get("_field1")).floatValue();
                 String type = (String)fields.get(3);
-                DrawObject newObj = new DrawObject(x,y,z,th,ph,type,(i==-1),ch);
+                DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
                 go.actors.put(i,newObj);
             } else if(cmdType.equals("RemoveObject")){
                 go.actors.remove(i);

@@ -33,11 +33,7 @@ public class ClientPanel extends AbstractGLWindow
         setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
         for(DrawObject dO : go.actors.values()) {
-            if(dO.type.equals("Player")) {
-                dO.draw(gl2,playerModel);
-            } else if(dO.type.equals("Bullet")) {
-                dO.draw(gl2,bulletModel);
-            }
+            dO.draw(gl2);
         }
     }
     public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged) {}
