@@ -52,7 +52,8 @@ public class KeyListenerSmoother implements KeyListener
                                         key, KeyEvent.CHAR_UNDEFINED);
             for(KeyListener l : listeners)
             {
-                l.keyPressed(e);
+                try { l.keyPressed(e); }
+                catch(Exception ex) {}
             }
         }
     }

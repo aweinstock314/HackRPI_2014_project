@@ -14,7 +14,7 @@ import org.json.simple.JSONValue;
 public class ModelViewer extends AbstractGLWindow
 {
     //public JSONArray model = null;
-    public Map<Integer, DrawObject> drawObjects = new LinkedHashMap<Integer, DrawObject>();
+    public GameWorld world = new GameWorld();
     public CameraHandler cameraHandler = new CameraHandler();
     public SecondAttemptAtInput saai = null;
     public KeyListenerSmoother smoother = new KeyListenerSmoother(10);
@@ -61,7 +61,7 @@ public class ModelViewer extends AbstractGLWindow
         //setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         setPerspectiveProjection(gl2);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
-        for(DrawObject d : drawObjects.values()) { d.draw(gl2); }
+        for(DrawObject d : world.actors.values()) { d.draw(gl2); }
     }
     public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged) {}
     public void init(GLAutoDrawable drawable) {}
@@ -75,6 +75,8 @@ public class ModelViewer extends AbstractGLWindow
         {
             connectionToServer = new Socket("localhost", 51701);
             saai = new SecondAttemptAtInput(connectionToServer.getOutputStream());
+            ServerSyncer synch = new ServerSyncer(connectionToServer, world, cameraHandler);
+            new Thread(synch).start();
         }
         catch(Exception e) { e.printStackTrace(); }
         smoother.addKeyListener(saai);
@@ -86,8 +88,8 @@ public class ModelViewer extends AbstractGLWindow
         try { model = (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         //try { model = (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json")); }
         catch(Exception e) { e.printStackTrace(); }
-        drawObjects.put(-1, new DrawObject(0, 0, 0, 0, 0, "sphere", model));
-        drawObjects.put(0, new DrawObject(0, 5, 0, 0, 0, "sphere", model));
+        world.actors.put(-1L, new DrawObject(0, 0, 0, 0, 0, "sphere", model));
+        world.actors.put(0L, new DrawObject(0, 5, 0, 0, 0, "sphere", model));
     }
     public static void main(String[] args)
     {

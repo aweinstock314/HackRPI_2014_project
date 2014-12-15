@@ -4,37 +4,46 @@ import java.net.*;
 import java.util.*;
 import org.json.simple.*;
 
-public class ServerSyncer extends TimerTask {
+public class ServerSyncer implements Runnable {
 
-    private BufferedReader in;
-    private GameObject go;
+    private BufferedReader reader;
+    private GameWorld world;
     private CameraHandler ch;
 
-    public ServerSyncer(BufferedReader br, GameObject go, CameraHandler ch) {
-        this.in = br;
-        this.go = go;
-        this.ch = ch;
+    public ServerSyncer(Socket s, GameWorld w, CameraHandler c) throws IOException {
+        constructorAux(new BufferedReader(new InputStreamReader(s.getInputStream())), w, c);
     }
+    public ServerSyncer(BufferedReader br, GameWorld w, CameraHandler c) {
+        constructorAux(br, w, c);
+    }
+
+    protected void constructorAux(BufferedReader br, GameWorld w, CameraHandler c) {
+        reader = br;
+        world = w;
+        ch = c;
+    }
+
+    @Override
     public void run() {
-        try {
-            while(true) {
-                String initialString = in.readLine();
-                parse(initialString);
+        while(true) {
+            try {
+                String line = reader.readLine();
+                if(line == null) { break; }
+                parseAndUpdateWorld(line);
             }
-        } catch(IOException e) {
-            System.err.println("Reading failed");
+            catch(Exception e) { e.printStackTrace(); }
         }
     }
 
-    private JSONArray getModel(String type) {
+    private static JSONArray getModel(String type) {
         // TODO: model loading based on type of object
         try { return (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         catch(Exception e) { e.printStackTrace(); return null; }
     }
 
-    private void parse(String jsonString) {
+    private void parseAndUpdateWorld(String jsonString) {
         try {
-            System.out.println(jsonString);
+            System.out.printf("ServerSyncer: parsing \"%s\"\n", jsonString);
             Object obj = JSONValue.parse(jsonString);
             JSONObject jsobj = (JSONObject)obj;
             if(obj == null) return;
@@ -47,12 +56,12 @@ public class ServerSyncer extends TimerTask {
                 float x = ((Number)posData.get("_field0")).floatValue();
                 float y = ((Number)posData.get("_field1")).floatValue();
                 float z = ((Number)posData.get("_field2")).floatValue();
-                go.actors.get(i).setPosition(x,y,z);
+                world.actors.get(i).setPosition(x,y,z);
             } else if(cmdType.equals("SetOrientation")) {
                 JSONObject orData = (JSONObject)fields.get(1);
                 float th = ((Number)orData.get("_field0")).floatValue();
                 float ph = ((Number)orData.get("_field1")).floatValue();
-                go.actors.get(i).setOrientation(th,ph);
+                world.actors.get(i).setOrientation(th,ph);
             } else if(cmdType.equals("AddObject")) {
                 System.out.println(cmdType);
                 JSONObject posData = (JSONObject)fields.get(1);
@@ -64,9 +73,9 @@ public class ServerSyncer extends TimerTask {
                 float ph = ((Number)orData.get("_field1")).floatValue();
                 String type = (String)fields.get(3);
                 DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
-                go.actors.put(i,newObj);
+                world.actors.put(i,newObj);
             } else if(cmdType.equals("RemoveObject")){
-                go.actors.remove(i);
+                world.actors.remove(i);
             }
         } catch(Exception e) {
             e.printStackTrace();

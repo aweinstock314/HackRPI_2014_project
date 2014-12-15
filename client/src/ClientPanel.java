@@ -11,7 +11,7 @@ public class ClientPanel extends AbstractGLWindow
 {
     public JSONArray playerModel = null;
     public JSONArray bulletModel = null;
-    private GameObject go;
+    private GameWorld go;
 
     public CameraHandler cameraHandler;
 
@@ -41,7 +41,7 @@ public class ClientPanel extends AbstractGLWindow
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {}
     public void dispose(GLAutoDrawable drawable) {}
 
-    public ClientPanel(int w, int h, GameObject go, CommandPusher cp, CameraHandler ch)
+    public ClientPanel(int w, int h, GameWorld go, CommandPusher cp, CameraHandler ch)
     {
         GLCanvas canv = constructorAux(w, h, 5);
         this.go = go;
