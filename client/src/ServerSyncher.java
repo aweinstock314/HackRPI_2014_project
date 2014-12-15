@@ -4,16 +4,16 @@ import java.net.*;
 import java.util.*;
 import org.json.simple.*;
 
-public class ServerSyncer implements Runnable {
+public class ServerSyncher implements Runnable {
 
     private BufferedReader reader;
     private GameWorld world;
     private CameraHandler ch;
 
-    public ServerSyncer(Socket s, GameWorld w, CameraHandler c) throws IOException {
+    public ServerSyncher(Socket s, GameWorld w, CameraHandler c) throws IOException {
         constructorAux(new BufferedReader(new InputStreamReader(s.getInputStream())), w, c);
     }
-    public ServerSyncer(BufferedReader br, GameWorld w, CameraHandler c) {
+    public ServerSyncher(BufferedReader br, GameWorld w, CameraHandler c) {
         constructorAux(br, w, c);
     }
 
@@ -43,7 +43,7 @@ public class ServerSyncer implements Runnable {
 
     private void parseAndUpdateWorld(String jsonString) {
         try {
-            System.out.printf("ServerSyncer: parsing \"%s\"\n", jsonString);
+            System.out.printf("ServerSyncher: parsing \"%s\"\n", jsonString);
             Object obj = JSONValue.parse(jsonString);
             JSONObject jsobj = (JSONObject)obj;
             if(obj == null) return;

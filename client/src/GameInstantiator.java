@@ -24,7 +24,7 @@ public class GameInstantiator {
         jf.setVisible(true);
         java.util.Timer timer = new java.util.Timer(true);
 
-        ServerSyncer ss = new ServerSyncer(tc.getReader(),go,ch);
+        ServerSyncher ss = new ServerSyncher(tc.getReader(),go,ch);
         new Thread(ss).start();
     }
 }

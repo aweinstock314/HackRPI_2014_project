@@ -75,7 +75,7 @@ public class ModelViewer extends AbstractGLWindow
         {
             connectionToServer = new Socket("localhost", 51701);
             saai = new SecondAttemptAtInput(connectionToServer.getOutputStream());
-            ServerSyncer synch = new ServerSyncer(connectionToServer, world, cameraHandler);
+            ServerSyncher synch = new ServerSyncher(connectionToServer, world, cameraHandler);
             new Thread(synch).start();
         }
         catch(Exception e) { e.printStackTrace(); }
