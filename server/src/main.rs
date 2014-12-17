@@ -175,29 +175,35 @@ fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
 fn manage_world(mut world: HashMap<int, GameObject>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(int, PlayerCommand)>) {
+    let broadcast_location = |obj: &GameObject, i: int| {
+        broadcast.send(SetPosition(i, obj.pos));
+    };
     for (playerid, action) in player_moves.iter() {
         drop(get_player(&mut world, playerid, broadcast.clone()));
         match action {
             MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
-                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                let player = get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = apply_polar_movement(player.pos, delta, theta + PI/2.0);
                 println!("P#{} pos: {}", playerid, player.pos);
+                broadcast_location(player, playerid);
             }
             MoveSideways(delta) => {
                 println!("Player #{} moves {} units to their right", playerid, delta);
-                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                let player = get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = apply_polar_movement(player.pos, delta, theta);
                 println!("P#{} pos: {}", playerid, player.pos);
+                broadcast_location(player, playerid);
             }
             MoveUp(delta) => {
                 println!("Player #{} moves {} units up", playerid, delta);
-                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                let player = get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = player.pos + Position(0.0, delta, 0.0);
                 println!("P#{} pos: {}", playerid, player.pos);
+                broadcast_location(player, playerid);
             }
             RotateCamera(Orientation(theta, phi)) => {
                 println!("Player #{} rotates by ({}, {})", playerid, theta, phi);
