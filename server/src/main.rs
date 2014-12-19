@@ -62,6 +62,7 @@ pub enum ServerCommand {
     SetOrientation(int, Orientation),
     AddObject(int, Position, Orientation, ObjectType),
     RemoveObject(int),
+    SetPlayerNumber(int),
 }
 
 #[deriving(Encodable, Decodable, Clone)]
@@ -140,6 +141,7 @@ fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
 fn process_output_to_client(mut stream: TcpStream,
                             playernum: int,
                             receive_broadcast: Receiver<ServerCommand>) {
+    stream.write_line(json::encode(&SetPlayerNumber(playernum)).as_slice());
     for action in receive_broadcast.iter() {
         stream.write_line(json::encode(&action).as_slice());
     }

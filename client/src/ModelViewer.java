@@ -61,7 +61,13 @@ public class ModelViewer extends AbstractGLWindow
         //setProjection(gl2, cameraHandler.widthScale, cameraHandler.heightScale);
         setPerspectiveProjection(gl2);
         gl2.glClear(gl2.GL_COLOR_BUFFER_BIT);
-        for(DrawObject d : world.actors.values()) { d.draw(gl2); }
+        synchronized(world) {
+            for(DrawObject d : world.actors.values()) {
+                if(d != world.getPlayer()) {
+                    d.draw(gl2);
+                }
+            }
+        }
     }
     public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged) {}
     public void init(GLAutoDrawable drawable) {}
@@ -81,7 +87,7 @@ public class ModelViewer extends AbstractGLWindow
         catch(Exception e) { e.printStackTrace(); }
         smoother.addKeyListener(saai);
         smoother.addKeyListener(cameraHandler);
-        GLCanvas glcanv = constructorAux(w, h, 5);
+        GLCanvas glcanv = constructorAux(w, h, 60);
         glcanv.addKeyListener(smoother);
         glcanv.requestFocus();
         JSONArray model = null;

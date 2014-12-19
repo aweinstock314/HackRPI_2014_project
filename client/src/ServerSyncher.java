@@ -43,41 +43,51 @@ public class ServerSyncher implements Runnable {
 
     private void parseAndUpdateWorld(String jsonString) {
         try {
-            System.out.printf("ServerSyncher: parsing \"%s\"\n", jsonString);
-            Object obj = JSONValue.parse(jsonString);
-            JSONObject jsobj = (JSONObject)obj;
-            if(obj == null) return;
-            String cmdType = (String)jsobj.get("variant");
-            JSONArray fields = (JSONArray)jsobj.get("fields");
-            long i = (Long)fields.get(0);
-                System.out.println(cmdType);
-            if(cmdType.equals("SetPosition")) {
-                JSONObject posData = (JSONObject)fields.get(1);
-                float x = ((Number)posData.get("_field0")).floatValue();
-                float y = ((Number)posData.get("_field1")).floatValue();
-                float z = ((Number)posData.get("_field2")).floatValue();
-                world.actors.get(i).setPosition(x,y,z);
-            } else if(cmdType.equals("SetOrientation")) {
-                JSONObject orData = (JSONObject)fields.get(1);
-                float th = ((Number)orData.get("_field0")).floatValue();
-                float ph = ((Number)orData.get("_field1")).floatValue();
-                world.actors.get(i).setOrientation(th,ph);
-            } else if(cmdType.equals("AddObject")) {
-                System.out.println(cmdType);
-                JSONObject posData = (JSONObject)fields.get(1);
-                float x = ((Number)posData.get("_field0")).floatValue();
-                float y = ((Number)posData.get("_field1")).floatValue();
-                float z = ((Number)posData.get("_field2")).floatValue();
-                JSONObject orData = (JSONObject)fields.get(2);
-                float th = ((Number)orData.get("_field0")).floatValue();
-                float ph = ((Number)orData.get("_field1")).floatValue();
-                String type = (String)fields.get(3);
-                DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
-                world.actors.put(i,newObj);
-            } else if(cmdType.equals("RemoveObject")){
-                world.actors.remove(i);
+            synchronized(world) {
+                System.out.printf("ServerSyncher: parsing \"%s\"\n", jsonString);
+                Object obj = JSONValue.parse(jsonString);
+                JSONObject jsobj = (JSONObject)obj;
+                if(obj == null) return;
+                String cmdType = (String)jsobj.get("variant");
+                JSONArray fields = (JSONArray)jsobj.get("fields");
+                long i = (Long)fields.get(0);
+                //System.out.println(cmdType);
+                if(cmdType.equals("SetPosition")) {
+                    JSONObject posData = (JSONObject)fields.get(1);
+                    float x = ((Number)posData.get("_field0")).floatValue();
+                    float y = ((Number)posData.get("_field1")).floatValue();
+                    float z = ((Number)posData.get("_field2")).floatValue();
+                    world.actors.get(i).setPosition(x,y,z);
+                } else if(cmdType.equals("SetOrientation")) {
+                    JSONObject orData = (JSONObject)fields.get(1);
+                    float th = ((Number)orData.get("_field0")).floatValue();
+                    float ph = ((Number)orData.get("_field1")).floatValue();
+                    world.actors.get(i).setOrientation(th,ph);
+                } else if(cmdType.equals("AddObject")) {
+                    System.out.println(cmdType);
+                    JSONObject posData = (JSONObject)fields.get(1);
+                    float x = ((Number)posData.get("_field0")).floatValue();
+                    float y = ((Number)posData.get("_field1")).floatValue();
+                    float z = ((Number)posData.get("_field2")).floatValue();
+                    JSONObject orData = (JSONObject)fields.get(2);
+                    float th = ((Number)orData.get("_field0")).floatValue();
+                    float ph = ((Number)orData.get("_field1")).floatValue();
+                    String type = (String)fields.get(3);
+                    DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
+                    world.actors.put(i,newObj);
+                } else if(cmdType.equals("RemoveObject")){
+                    world.actors.remove(i);
+                } else if(cmdType.equals("SetPlayerNumber")) {
+                    world.playernum = i;
+                }
             }
-        } catch(Exception e) {
+        }
+        catch(NullPointerException npe) {
+            // TODO: initialize each client with all the other clients the server is handling (server-side)
+            System.err.println("Error: attempting to access an object that does was not added to this client.");
+            npe.printStackTrace();
+        } 
+        catch(Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Could not parse JSON");
         }
