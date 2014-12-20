@@ -15,7 +15,7 @@ public class CameraHandler extends Abstract3DKeyListener implements MouseWheelLi
     {
         gl2.glRotatef(rad2deg(phi), -1, 0, 0);
         gl2.glRotatef(rad2deg(theta), 0, -1, 0);
-        gl2.glTranslatef(-x, -y, z);
+        gl2.glTranslatef(-x, -y, -z);
     }
     public CameraHandler()
     {
@@ -34,7 +34,7 @@ public class CameraHandler extends Abstract3DKeyListener implements MouseWheelLi
 
     public void do_polar_movement(float m, double t)
     {
-        float rot_theta = theta + (float)(2*Math.PI * t);
+        float rot_theta = -theta + (float)(2*Math.PI * t);
         x += m*Math.cos(rot_theta);
         z += m*Math.sin(rot_theta);
     }
@@ -43,8 +43,8 @@ public class CameraHandler extends Abstract3DKeyListener implements MouseWheelLi
     void lookRight() { theta -= rotate_delta; }
     void lookDown() { phi -= rotate_delta; }
     void lookUp() { phi += rotate_delta; }
-    void moveForward() { do_polar_movement(move_delta, .25); }
-    void moveBackward() { do_polar_movement(move_delta, .75); }
+    void moveForward() { do_polar_movement(move_delta, .75); }
+    void moveBackward() { do_polar_movement(move_delta, .25); }
     void moveDown() { y -= move_delta; }
     void moveUp() { y += move_delta; }
     void moveLeft() { do_polar_movement(move_delta, .5); }

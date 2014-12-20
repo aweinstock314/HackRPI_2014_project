@@ -187,7 +187,7 @@ fn manage_world(mut world: HashMap<int, GameObject>,
                 println!("Player #{} moves {} units forward", playerid, delta);
                 let player = get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, theta + PI/2.0);
+                player.pos = apply_polar_movement(player.pos, delta, -theta + PI/2.0);
                 println!("P#{} pos: {}", playerid, player.pos);
                 broadcast_location(player, playerid);
             }
@@ -195,7 +195,7 @@ fn manage_world(mut world: HashMap<int, GameObject>,
                 println!("Player #{} moves {} units to their right", playerid, delta);
                 let player = get_player(&mut world, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, theta);
+                player.pos = apply_polar_movement(player.pos, delta, -theta);
                 println!("P#{} pos: {}", playerid, player.pos);
                 broadcast_location(player, playerid);
             }
