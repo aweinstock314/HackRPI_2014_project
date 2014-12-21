@@ -212,6 +212,7 @@ fn manage_world(mut world: HashMap<int, GameObject>,
                 let player = &mut get_player(&mut world, playerid, broadcast.clone());
                 player.ori = player.ori + Orientation(theta, phi);
                 println!("P#{} ori: {}", playerid, player.ori);
+                broadcast.send(SetOrientation(playerid, player.ori));
             }
             Shoot => { println!("Player #{} shoots", playerid); }
         }
