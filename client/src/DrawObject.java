@@ -57,18 +57,24 @@ public class DrawObject {
         }
     }
 
+    float rad2deg(float x) { return (float)((x * 180)/Math.PI); }
+
     public void draw(GL2 gl2) {
         if(isPlayer || model == null) return;
         //System.out.printf("Drawing an object at (%f, %f, %f)\n", x, y, z);
+        gl2.glPushMatrix();
+        gl2.glRotatef(rad2deg(phi), -1, 0, 0);
+        gl2.glRotatef(rad2deg(theta), 0, -1, 0);
+        gl2.glTranslatef(x, y, -z);
         gl2.glBegin(gl2.GL_TRIANGLES);
         for(int i = 0; i < (model.size()/3); i+=3) {
             gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
-            //TODO: factor in rotation by (theta, phi)
             gl2.glVertex3d(
-                ((Number)model.get(i)).floatValue() + x,
-                ((Number)model.get(i+1)).floatValue() + y,
-                ((Number)model.get(i+2)).floatValue() + z);
+                ((Number)model.get(i)).floatValue(),
+                ((Number)model.get(i+1)).floatValue(),
+                ((Number)model.get(i+2)).floatValue());
         }
         gl2.glEnd();
+        gl2.glPopMatrix();
     }
 }
