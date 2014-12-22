@@ -37,7 +37,13 @@ public class ServerSyncher implements Runnable {
 
     private static JSONArray getModel(String type) {
         // TODO: model loading based on type of object
-        try { return (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
+        try {
+            System.out.println(type);
+            if("Player".equals(type)) {
+                return (JSONArray)JSONValue.parse(new FileReader("unit_triprism.json"));
+            }
+            else { return (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
+        }
         catch(Exception e) { e.printStackTrace(); return null; }
     }
 

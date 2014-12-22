@@ -34,7 +34,7 @@ fn make_sphereoid(xz_sides: uint, phi_sides: uint, radius: f64) -> Vec<f64> {
 fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
     let mut rv = Vec::new();
     let xzs = xz_sides as f64;
-    for ixz in range(0, xz_sides) {
+    for ixz in range(0, xz_sides*4) {
         let fxz = ixz as f64;
         let (theta1, theta2) = ((TAU * fxz) / xzs, (TAU * (fxz+1.)) / xzs);
         let (x1, z1) = (theta1.cos(), theta1.sin());
@@ -56,7 +56,9 @@ fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
 fn main() {
     let unit_sphere = make_sphereoid(50, 50, 1.0);
     let unit_cylinder = make_cylinder(25, 1.0, 1.0);
+    let unit_triprism = make_cylinder(3, 0.5, 1.0);
     File::create(&Path::new("unit_sphere.json")).write_line(json::encode(&unit_sphere).as_slice());
     File::create(&Path::new("unit_cylinder.json")).write_line(json::encode(&unit_cylinder).as_slice());
+    File::create(&Path::new("unit_triprism.json")).write_line(json::encode(&unit_triprism).as_slice());
     //println!("{}", json::encode(&unit_sphere));
 }

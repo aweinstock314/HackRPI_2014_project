@@ -64,8 +64,8 @@ public class DrawObject {
         //System.out.printf("Drawing an object at (%f, %f, %f)\n", x, y, z);
         gl2.glPushMatrix();
         gl2.glTranslatef(x, y, -z);
-        gl2.glRotatef(rad2deg(phi), 1, 0, 0);
-        gl2.glRotatef(rad2deg(theta), 0, 1, 0);
+        gl2.glRotatef(rad2deg(phi), -1, 0, 0);
+        gl2.glRotatef(rad2deg(theta), 0, -1, 0);
         gl2.glBegin(gl2.GL_TRIANGLES);
         for(int i = 0; i < (model.size()/3); i+=3) {
             gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
