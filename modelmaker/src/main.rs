@@ -14,7 +14,7 @@ fn puttri(v: &mut Vec<f64>, p1: (f64, f64, f64), p2: (f64, f64, f64), p3: (f64, 
 fn make_sphereoid(xz_sides: uint, phi_sides: uint, radius: f64) -> Vec<f64> {
     let mut rv = Vec::new();
     let (xzs, ps) = (xz_sides as f64, phi_sides as f64);
-    for i1 in range(0, xz_sides*4) {
+    for i1 in range(0, xz_sides) {
         for i2 in range(0, phi_sides) {
             let (f1, f2) = (i1 as f64, i2 as f64);
             let (theta1, theta2) = ((TAU * f1) / xzs, TAU * (f1+1.) / xzs);
@@ -34,11 +34,11 @@ fn make_sphereoid(xz_sides: uint, phi_sides: uint, radius: f64) -> Vec<f64> {
 fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
     let mut rv = Vec::new();
     let xzs = xz_sides as f64;
-    for ixz in range(0, xz_sides*4) {
+    for ixz in range(0, xz_sides) {
         let fxz = ixz as f64;
         let (theta1, theta2) = ((TAU * fxz) / xzs, (TAU * (fxz+1.)) / xzs);
-        let (x1, z1) = (theta1.cos(), theta1.sin());
-        let (x2, z2) = (theta2.cos(), theta2.sin());
+        let (x1, z1) = (radius*theta1.cos(), radius*theta1.sin());
+        let (x2, z2) = (radius*theta2.cos(), radius*theta2.sin());
         let p1 = (x1, 0.0, z1);
         let p2 = (x1, height, z1);
         let p3 = (x2, height, z2);

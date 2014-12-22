@@ -67,7 +67,7 @@ public class DrawObject {
         gl2.glRotatef(rad2deg(phi), -1, 0, 0);
         gl2.glRotatef(rad2deg(theta), 0, -1, 0);
         gl2.glBegin(gl2.GL_TRIANGLES);
-        for(int i = 0; i < (model.size()/3); i+=3) {
+        for(int i = 0; i < model.size(); i+=3) {
             gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
             gl2.glVertex3d(
                 ((Number)model.get(i)).floatValue(),
