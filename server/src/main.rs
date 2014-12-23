@@ -1,6 +1,6 @@
-extern crate serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 extern crate time;
-use serialize::json;
+use rustc_serialize::json;
 use std::io::{TcpListener, TcpStream, BufferedStream};
 use std::io::{Acceptor, Listener};
 use std::collections::HashMap;
@@ -8,6 +8,7 @@ use std::collections::hash_map::Entry::{Vacant, Occupied};
 use std::sync::{Mutex, Arc};
 use std::num::FloatMath;
 use std::ops::Add;
+use std::thread::Thread;
 
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = std::f64::consts::PI_2;
@@ -16,7 +17,7 @@ static TAU: f64 = std::f64::consts::PI_2;
 #[link(name = "ode")] extern {}
 mod ode_bindgen;
 
-#[deriving(Encodable, Decodable, Clone, Show, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone, Show, Copy)]
 //pub struct Position { x: f64, y: f64, z: f64 }
 pub struct Position (f64, f64, f64);
 
@@ -27,8 +28,7 @@ impl Add<Position, Position> for Position {
         Position(x1 + x2, y1 + y2, z1 + z2)
     }
 }
-//:%s/\(En\|De\)codable/Rustc\0/gc
-#[deriving(Encodable, Decodable, Clone, Show, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone, Show, Copy)]
 //pub struct Orientation { theta: f64, phi: f64 }
 pub struct Orientation (f64, f64);
 
@@ -40,7 +40,7 @@ impl Add<Orientation, Orientation> for Orientation {
     }
 }
 
-#[deriving(Encodable, Decodable, Clone, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone, Copy)]
 pub enum PlayerCommand {
     MoveForward(f64),
     MoveSideways(f64),
@@ -49,7 +49,7 @@ pub enum PlayerCommand {
     Shoot,
 }
 
-#[deriving(Encodable, Decodable, Clone, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone, Copy)]
 pub enum ObjectType {
     Floor,
     Obstacle(int),
@@ -57,7 +57,7 @@ pub enum ObjectType {
     Bullet,
 }
 
-#[deriving(Encodable, Decodable, Clone, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone, Copy)]
 pub enum ServerCommand {
     SetPosition(int, Position),
     SetOrientation(int, Orientation),
@@ -66,13 +66,13 @@ pub enum ServerCommand {
     SetPlayerNumber(int),
 }
 
-#[deriving(Encodable, Decodable, Clone)]
+#[deriving(RustcEncodable, RustcDecodable, Clone)]
 pub struct IncomingMessage {
     command: PlayerCommand,
     timestamp: i64,
 }
 
-#[deriving(Encodable, Decodable, Clone)]
+#[deriving(RustcEncodable, RustcDecodable, Clone)]
 pub struct OutgoingMessage {
     command: ServerCommand,
     timestamp: i64,
@@ -119,7 +119,7 @@ fn interact_with_client(mut stream: TcpStream,
                         transmit_playmove: Sender<(int, PlayerCommand)>) {
     println!("Player #{} joined ({}).", playernum, stream.peer_name());
     let mut buffered = BufferedStream::new(stream.clone());
-    spawn(move || { process_input_from_client(buffered, playernum, transmit_playmove) });
+    Thread::spawn(move || { process_input_from_client(buffered, playernum, transmit_playmove) }).detach();
     process_output_to_client(stream, playernum, receive_broadcast);
 }
 
@@ -279,10 +279,10 @@ fn main() {
     //let mut receive_broadcast = ReceiverMultiplexer::new(receive_broadcast_precursor);
     let transmitters = Arc::new(Mutex::new(vec!()));
     let transmitters2 = transmitters.clone();
-    spawn(move || { rebroadcast_transmitter(receive_broadcast_precursor, transmitters2); });
+    Thread::spawn(move || { rebroadcast_transmitter(receive_broadcast_precursor, transmitters2); }).detach();
 
-    spawn(move || { manage_world(world, transmit_broadcast, receive_playmove); });
-    //spawn(move || { receive_broadcast.rebroadcast(); });
+    Thread::spawn(move || { manage_world(world, transmit_broadcast, receive_playmove); }).detach();
+    //Thread::spawn(move || { receive_broadcast.rebroadcast(); }).detach();
     
 
     let mut acceptor = listener.listen();
@@ -301,8 +301,8 @@ fn main() {
                     drop(val);
                 }
                 //let rbc = receive_broadcast.clone();
-                //spawn(move || { show_examples(stream, playernum.clone(), tpm); });
-                spawn(move || { interact_with_client(stream, playernum, rx, tpm); });
+                //Thread::spawn(move || { show_examples(stream, playernum.clone(), tpm); }).detach();
+                Thread::spawn(move || { interact_with_client(stream, playernum, rx, tpm); }).detach();
             }
         }
     }

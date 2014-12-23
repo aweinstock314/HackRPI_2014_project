@@ -4,5 +4,6 @@ name = "server"
 version = "0.0.1"
 authors = ["Avi Weinstock <aweinstock314@gmail.com>"]
 
-[dependencies.time]
-git = "http://github.com/rust-lang/time"
+[dependencies]
+time = "*"
+rustc-serialize = "*"
