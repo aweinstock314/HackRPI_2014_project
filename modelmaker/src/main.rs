@@ -35,7 +35,7 @@ fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
     let mut rv = Vec::new();
     let xzs = xz_sides as f64;
     for ixz in range(0, xz_sides) {
-        let fxz = ixz as f64;
+        let fxz = ixz as f64 - (xzs/4.);
         let (theta1, theta2) = ((TAU * fxz) / xzs, (TAU * (fxz+1.)) / xzs);
         let (x1, z1) = (radius*theta1.cos(), radius*theta1.sin());
         let (x2, z2) = (radius*theta2.cos(), radius*theta2.sin());
