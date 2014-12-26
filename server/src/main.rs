@@ -175,18 +175,19 @@ fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
     Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
 }
 
-fn manage_world(mut world: HashMap<int, GameObject>,
+fn manage_world(world: Arc<Mutex<HashMap<int, GameObject>>>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(int, PlayerCommand)>) {
     let broadcast_location = |obj: &GameObject, i: int| {
         broadcast.send(ServerCommand::SetPosition(i, obj.pos));
     };
     for (playerid, action) in player_moves.iter() {
-        drop(get_player(&mut world, playerid, broadcast.clone()));
+        drop(get_player(&mut *world.lock(), playerid, broadcast.clone()));
         match action {
             PlayerCommand::MoveForward(delta) => {
                 println!("Player #{} moves {} units forward", playerid, delta);
-                let player = get_player(&mut world, playerid, broadcast.clone());
+                let mut wrld = world.lock();
+                let player = get_player(&mut *wrld, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = apply_polar_movement(player.pos, delta, -theta + PI/2.0);
                 println!("P#{} pos: {}", playerid, player.pos);
@@ -194,7 +195,8 @@ fn manage_world(mut world: HashMap<int, GameObject>,
             }
             PlayerCommand::MoveSideways(delta) => {
                 println!("Player #{} moves {} units to their right", playerid, delta);
-                let player = get_player(&mut world, playerid, broadcast.clone());
+                let mut wrld = world.lock();
+                let player = get_player(&mut *wrld, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = apply_polar_movement(player.pos, delta, -theta);
                 println!("P#{} pos: {}", playerid, player.pos);
@@ -202,7 +204,8 @@ fn manage_world(mut world: HashMap<int, GameObject>,
             }
             PlayerCommand::MoveUp(delta) => {
                 println!("Player #{} moves {} units up", playerid, delta);
-                let player = get_player(&mut world, playerid, broadcast.clone());
+                let mut wrld = world.lock();
+                let player = get_player(&mut *wrld, playerid, broadcast.clone());
                 let Orientation(theta, _) = player.ori;
                 player.pos = player.pos + Position(0.0, delta, 0.0);
                 println!("P#{} pos: {}", playerid, player.pos);
@@ -210,7 +213,8 @@ fn manage_world(mut world: HashMap<int, GameObject>,
             }
             PlayerCommand::RotateCamera(Orientation(theta, phi)) => {
                 println!("Player #{} rotates by ({}, {})", playerid, theta, phi);
-                let player = &mut get_player(&mut world, playerid, broadcast.clone());
+                let mut wrld = world.lock();
+                let player = &mut get_player(&mut *wrld, playerid, broadcast.clone());
                 player.ori = player.ori + Orientation(theta, phi);
                 println!("P#{} ori: {}", playerid, player.ori);
                 broadcast.send(ServerCommand::SetOrientation(playerid, player.ori));
@@ -270,7 +274,7 @@ fn main() {
     //let listener = TcpListener::bind("127.0.0.1:51701"); //large number for port chosen pseudorandomly
     let listener = TcpListener::bind("0.0.0.0:51701"); //large number for port chosen pseudorandomly
 
-    let mut world = HashMap::<int, GameObject>::new();
+    let world = Arc::new(Mutex::new(HashMap::<int, GameObject>::new()));
     let mut playernum: int = 0;
 
     let (transmit_broadcast, receive_broadcast_precursor) = channel();
