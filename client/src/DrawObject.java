@@ -9,6 +9,7 @@ public class DrawObject {
     public float z;
     public float theta;
     public float phi;
+    public float r, g, b;
     public String type;
     private boolean isPlayer;
     private CameraHandler ch;
@@ -26,6 +27,7 @@ public class DrawObject {
         isPlayer = true;
         this.ch = ch;
         model = null; // TODO: players might need models for collision detection
+        initializeColor();
     }
     // non-player constructor
     public DrawObject(float x, float y,float z, float th, float ph, String type, JSONArray model) {
@@ -35,6 +37,13 @@ public class DrawObject {
         isPlayer = false;
         ch = null;
         this.model = model;
+        initializeColor();
+    }
+
+    private void initializeColor() {
+        r = (float)Math.random();
+        g = (float)Math.random();
+        b = (float)Math.random();
     }
 
     public void setPosition(float x,float y,float z) {
@@ -64,11 +73,14 @@ public class DrawObject {
         //System.out.printf("Drawing an object at (%f, %f, %f)\n", x, y, z);
         gl2.glPushMatrix();
         gl2.glTranslatef(x, y, -z);
-        gl2.glRotatef(rad2deg(phi), 1, 0, 0);
         gl2.glRotatef(rad2deg(theta), 0, -1, 0);
+        gl2.glRotatef(rad2deg(phi), 1, 0, 0);
         gl2.glBegin(gl2.GL_TRIANGLES);
         for(int i = 0; i < model.size(); i+=3) {
-            gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
+            //gl2.glColor3f((float)Math.random(), (float)Math.random(), (float)Math.random());
+            float c1 = ((float)i)/model.size();
+            float c2 = .25f + (c1 * .75f);
+            gl2.glColor3f(c2*r, c2*g, c2*b);
             gl2.glVertex3d(
                 ((Number)model.get(i)).floatValue(),
                 ((Number)model.get(i+1)).floatValue(),
