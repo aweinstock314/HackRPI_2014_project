@@ -40,7 +40,7 @@ public class ServerSyncher implements Runnable {
         try {
             System.out.println(type);
             if("Player".equals(type)) {
-                return (JSONArray)JSONValue.parse(new FileReader("unit_triprism.json"));
+                return (JSONArray)JSONValue.parse(new FileReader("player_model.json"));
             }
             else { return (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json")); }
         }

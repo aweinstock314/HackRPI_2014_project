@@ -53,12 +53,30 @@ fn make_cylinder(xz_sides: uint, radius: f64, height: f64) -> Vec<f64> {
     rv
 }
 
+fn translate(model: &mut Vec<f64>, (x, y, z): (f64, f64, f64)) {
+    for i in range(0, model.len()/3) {
+        model[(3*i)] += x;
+        model[(3*i)+1] += y;
+        model[(3*i)+2] += z;
+    }
+}
+
+fn make_player_model() -> Vec<f64> {
+    let player_model = make_cylinder(3, 0.5, 1.0);
+    let mut head = make_sphereoid(25, 25, 0.25);
+    translate(&mut head, (0.0, 1.0, -0.5));
+    let player_model = player_model.add(head.as_slice());
+    player_model
+}
+
 fn main() {
     let unit_sphere = make_sphereoid(50, 50, 1.0);
     let unit_cylinder = make_cylinder(25, 1.0, 1.0);
     let unit_triprism = make_cylinder(3, 0.5, 1.0);
+    let player_model = make_player_model();
     File::create(&Path::new("unit_sphere.json")).write_line(json::encode(&unit_sphere).as_slice());
     File::create(&Path::new("unit_cylinder.json")).write_line(json::encode(&unit_cylinder).as_slice());
     File::create(&Path::new("unit_triprism.json")).write_line(json::encode(&unit_triprism).as_slice());
+    File::create(&Path::new("player_model.json")).write_line(json::encode(&player_model).as_slice());
     //println!("{}", json::encode(&unit_sphere));
 }
