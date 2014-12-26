@@ -57,13 +57,14 @@ pub enum ObjectType {
     Bullet,
 }
 
-#[deriving(RustcEncodable, RustcDecodable, Clone, Copy)]
+#[deriving(RustcEncodable, RustcDecodable, Clone)]
 pub enum ServerCommand {
     SetPosition(int, Position),
     SetOrientation(int, Orientation),
     AddObject(int, Position, Orientation, ObjectType),
     RemoveObject(int),
     SetPlayerNumber(int),
+    InitializeWorld(HashMap<int, GameObject>),
 }
 
 #[deriving(RustcEncodable, RustcDecodable, Clone)]
@@ -78,6 +79,7 @@ pub struct OutgoingMessage {
     timestamp: i64,
 }
 
+#[deriving(RustcEncodable, RustcDecodable, Clone)]
 pub struct GameObject {
     pos: Position,
     ori: Orientation,
@@ -105,8 +107,8 @@ fn show_examples(mut stream: TcpStream, playernum: int, transmit_playmove: Sende
     let seconds = time::get_time().sec;
     println!("Received a connection from {} at time {} (player {}).", stream.peer_name(), seconds, playernum);
     //stream.write_line(json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).as_slice());
-    for &cmd in example_servercommands().iter() {
-        stream.write_line(json::encode(&OutgoingMessage{command: cmd, timestamp: seconds}).as_slice());
+    for cmd in example_servercommands().iter() {
+        stream.write_line(json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).as_slice());
     }
     for &cmd in example_playercommands().iter() {
         stream.write_line(json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).as_slice());
@@ -116,11 +118,12 @@ fn show_examples(mut stream: TcpStream, playernum: int, transmit_playmove: Sende
 fn interact_with_client(mut stream: TcpStream,
                         playernum: int,
                         receive_broadcast: Receiver<ServerCommand>,
-                        transmit_playmove: Sender<(int, PlayerCommand)>) {
+                        transmit_playmove: Sender<(int, PlayerCommand)>,
+                        world: Arc<Mutex<HashMap<int, GameObject>>>) {
     println!("Player #{} joined ({}).", playernum, stream.peer_name());
     let mut buffered = BufferedStream::new(stream.clone());
     Thread::spawn(move || { process_input_from_client(buffered, playernum, transmit_playmove) }).detach();
-    process_output_to_client(stream, playernum, receive_broadcast);
+    process_output_to_client(stream, playernum, receive_broadcast, world);
 }
 
 fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
@@ -141,8 +144,10 @@ fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
 
 fn process_output_to_client(mut stream: TcpStream,
                             playernum: int,
-                            receive_broadcast: Receiver<ServerCommand>) {
+                            receive_broadcast: Receiver<ServerCommand>,
+                            world: Arc<Mutex<HashMap<int, GameObject>>>) {
     stream.write_line(json::encode(&ServerCommand::SetPlayerNumber(playernum)).as_slice());
+    stream.write_line(json::encode(&ServerCommand::InitializeWorld(world.lock().clone())).as_slice());
     for action in receive_broadcast.iter() {
         stream.write_line(json::encode(&action).as_slice());
     }
@@ -285,7 +290,10 @@ fn main() {
     let transmitters2 = transmitters.clone();
     Thread::spawn(move || { rebroadcast_transmitter(receive_broadcast_precursor, transmitters2); }).detach();
 
-    Thread::spawn(move || { manage_world(world, transmit_broadcast, receive_playmove); }).detach();
+    {
+        let wrld = world.clone();
+        Thread::spawn(move || { manage_world(wrld, transmit_broadcast, receive_playmove); }).detach();
+    }
     //Thread::spawn(move || { receive_broadcast.rebroadcast(); }).detach();
     
 
@@ -306,7 +314,10 @@ fn main() {
                 }
                 //let rbc = receive_broadcast.clone();
                 //Thread::spawn(move || { show_examples(stream, playernum.clone(), tpm); }).detach();
-                Thread::spawn(move || { interact_with_client(stream, playernum, rx, tpm); }).detach();
+                {
+                    let wrld = world.clone();
+                    Thread::spawn(move || { interact_with_client(stream, playernum, rx, tpm, wrld); }).detach();
+                }
             }
         }
     }

@@ -56,35 +56,39 @@ public class ServerSyncher implements Runnable {
                 if(obj == null) return;
                 String cmdType = (String)jsobj.get("variant");
                 JSONArray fields = (JSONArray)jsobj.get("fields");
-                long i = (Long)fields.get(0);
-                //System.out.println(cmdType);
-                if(cmdType.equals("SetPosition")) {
-                    JSONObject posData = (JSONObject)fields.get(1);
-                    float x = ((Number)posData.get("_field0")).floatValue();
-                    float y = ((Number)posData.get("_field1")).floatValue();
-                    float z = ((Number)posData.get("_field2")).floatValue();
-                    world.actors.get(i).setPosition(x,y,z);
-                } else if(cmdType.equals("SetOrientation")) {
-                    JSONObject orData = (JSONObject)fields.get(1);
-                    float th = ((Number)orData.get("_field0")).floatValue();
-                    float ph = ((Number)orData.get("_field1")).floatValue();
-                    world.actors.get(i).setOrientation(th,ph);
-                } else if(cmdType.equals("AddObject")) {
-                    System.out.println(cmdType);
-                    JSONObject posData = (JSONObject)fields.get(1);
-                    float x = ((Number)posData.get("_field0")).floatValue();
-                    float y = ((Number)posData.get("_field1")).floatValue();
-                    float z = ((Number)posData.get("_field2")).floatValue();
-                    JSONObject orData = (JSONObject)fields.get(2);
-                    float th = ((Number)orData.get("_field0")).floatValue();
-                    float ph = ((Number)orData.get("_field1")).floatValue();
-                    String type = (String)fields.get(3);
-                    DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
-                    world.actors.put(i,newObj);
-                } else if(cmdType.equals("RemoveObject")){
-                    world.actors.remove(i);
-                } else if(cmdType.equals("SetPlayerNumber")) {
-                    world.playernum = i;
+                if(cmdType.equals("InitializeWorld")) {
+                    JSONObject world = (JSONObject)fields.get(0);
+                }
+                else {
+                    long i = (Long)fields.get(0);
+                    if(cmdType.equals("SetPosition")) {
+                        JSONObject posData = (JSONObject)fields.get(1);
+                        float x = ((Number)posData.get("_field0")).floatValue();
+                        float y = ((Number)posData.get("_field1")).floatValue();
+                        float z = ((Number)posData.get("_field2")).floatValue();
+                        world.actors.get(i).setPosition(x,y,z);
+                    } else if(cmdType.equals("SetOrientation")) {
+                        JSONObject orData = (JSONObject)fields.get(1);
+                        float th = ((Number)orData.get("_field0")).floatValue();
+                        float ph = ((Number)orData.get("_field1")).floatValue();
+                        world.actors.get(i).setOrientation(th,ph);
+                    } else if(cmdType.equals("AddObject")) {
+                        System.out.println(cmdType);
+                        JSONObject posData = (JSONObject)fields.get(1);
+                        float x = ((Number)posData.get("_field0")).floatValue();
+                        float y = ((Number)posData.get("_field1")).floatValue();
+                        float z = ((Number)posData.get("_field2")).floatValue();
+                        JSONObject orData = (JSONObject)fields.get(2);
+                        float th = ((Number)orData.get("_field0")).floatValue();
+                        float ph = ((Number)orData.get("_field1")).floatValue();
+                        String type = (String)fields.get(3);
+                        DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
+                        world.actors.put(i,newObj);
+                    } else if(cmdType.equals("RemoveObject")){
+                        world.actors.remove(i);
+                    } else if(cmdType.equals("SetPlayerNumber")) {
+                        world.playernum = i;
+                    }
                 }
             }
         }
