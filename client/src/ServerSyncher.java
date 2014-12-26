@@ -47,6 +47,30 @@ public class ServerSyncher implements Runnable {
         catch(Exception e) { e.printStackTrace(); return null; }
     }
 
+    private void setPosition(long i, JSONObject posData) {
+        float x = ((Number)posData.get("_field0")).floatValue();
+        float y = ((Number)posData.get("_field1")).floatValue();
+        float z = ((Number)posData.get("_field2")).floatValue();
+        world.actors.get(i).setPosition(x,y,z);
+    }
+
+    private void setOrientation(long i, JSONObject orData) {
+        float th = ((Number)orData.get("_field0")).floatValue();
+        float ph = ((Number)orData.get("_field1")).floatValue();
+        world.actors.get(i).setOrientation(th,ph);
+    }
+
+    private void addObject(long i, JSONObject posData, JSONObject orData, String type) {
+        //TODO: deduplicate
+        float x = ((Number)posData.get("_field0")).floatValue();
+        float y = ((Number)posData.get("_field1")).floatValue();
+        float z = ((Number)posData.get("_field2")).floatValue();
+        float th = ((Number)orData.get("_field0")).floatValue();
+        float ph = ((Number)orData.get("_field1")).floatValue();
+        DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
+        world.actors.put(i,newObj);
+    }
+
     private void parseAndUpdateWorld(String jsonString) {
         try {
             synchronized(world) {
@@ -58,32 +82,29 @@ public class ServerSyncher implements Runnable {
                 JSONArray fields = (JSONArray)jsobj.get("fields");
                 if(cmdType.equals("InitializeWorld")) {
                     JSONObject world = (JSONObject)fields.get(0);
+                    for(Object o : world.entrySet()) {
+                        Map.Entry e = (Map.Entry)o;
+                        System.out.printf("(%s, %s)\n", e.getKey(), e.getValue());
+                        long i = Long.parseLong((String)e.getKey(), 10);
+                        JSONObject posData = (JSONObject)((JSONObject)e.getValue()).get("pos");
+                        JSONObject orData = (JSONObject)((JSONObject)e.getValue()).get("ori");
+                        String type = "Player"; // TODO: change GameObject::mesh to GameObject::type server-side
+                        addObject(i, posData, orData, type);
+                    }
                 }
                 else {
                     long i = (Long)fields.get(0);
                     if(cmdType.equals("SetPosition")) {
                         JSONObject posData = (JSONObject)fields.get(1);
-                        float x = ((Number)posData.get("_field0")).floatValue();
-                        float y = ((Number)posData.get("_field1")).floatValue();
-                        float z = ((Number)posData.get("_field2")).floatValue();
-                        world.actors.get(i).setPosition(x,y,z);
+                        setPosition(i, posData);
                     } else if(cmdType.equals("SetOrientation")) {
                         JSONObject orData = (JSONObject)fields.get(1);
-                        float th = ((Number)orData.get("_field0")).floatValue();
-                        float ph = ((Number)orData.get("_field1")).floatValue();
-                        world.actors.get(i).setOrientation(th,ph);
+                        setOrientation(i, orData);
                     } else if(cmdType.equals("AddObject")) {
-                        System.out.println(cmdType);
                         JSONObject posData = (JSONObject)fields.get(1);
-                        float x = ((Number)posData.get("_field0")).floatValue();
-                        float y = ((Number)posData.get("_field1")).floatValue();
-                        float z = ((Number)posData.get("_field2")).floatValue();
                         JSONObject orData = (JSONObject)fields.get(2);
-                        float th = ((Number)orData.get("_field0")).floatValue();
-                        float ph = ((Number)orData.get("_field1")).floatValue();
                         String type = (String)fields.get(3);
-                        DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
-                        world.actors.put(i,newObj);
+                        addObject(i, posData, orData, type);
                     } else if(cmdType.equals("RemoveObject")){
                         world.actors.remove(i);
                     } else if(cmdType.equals("SetPlayerNumber")) {
