@@ -61,14 +61,10 @@ public class ServerSyncher implements Runnable {
     }
 
     private void addObject(long i, JSONObject posData, JSONObject orData, String type) {
-        //TODO: deduplicate
-        float x = ((Number)posData.get("_field0")).floatValue();
-        float y = ((Number)posData.get("_field1")).floatValue();
-        float z = ((Number)posData.get("_field2")).floatValue();
-        float th = ((Number)orData.get("_field0")).floatValue();
-        float ph = ((Number)orData.get("_field1")).floatValue();
-        DrawObject newObj = new DrawObject(x,y,z,th,ph,type,getModel(type));
-        world.actors.put(i,newObj);
+        DrawObject newObj = new DrawObject(type, getModel(type));
+        world.actors.put(i, newObj);
+        setPosition(i, posData);
+        setOrientation(i, orData);
     }
 
     private void parseAndUpdateWorld(String jsonString) {

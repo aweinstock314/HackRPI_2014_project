@@ -29,7 +29,14 @@ public class DrawObject {
         model = null; // TODO: players might need models for collision detection
         initializeColor();
     }
-    // non-player constructor
+    // non-player constructors
+    public DrawObject(String type, JSONArray model) {
+        this.type = type;
+        isPlayer = false;
+        ch = null;
+        this.model = model;
+        initializeColor();
+    }
     public DrawObject(float x, float y,float z, float th, float ph, String type, JSONArray model) {
         setPosition(x,y,z);
         setOrientation(th,ph);
