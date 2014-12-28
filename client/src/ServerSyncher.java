@@ -88,7 +88,7 @@ public class ServerSyncher implements Runnable {
                         long i = Long.parseLong((String)e.getKey(), 10);
                         JSONObject posData = (JSONObject)((JSONObject)e.getValue()).get("pos");
                         JSONObject orData = (JSONObject)((JSONObject)e.getValue()).get("ori");
-                        String type = "Player"; // TODO: change GameObject::mesh to GameObject::type server-side
+                        String type = (String)((JSONObject)e.getValue()).get("obj_type");
                         addObject(i, posData, orData, type);
                     }
                 }

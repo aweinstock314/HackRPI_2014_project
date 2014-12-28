@@ -83,7 +83,7 @@ pub struct OutgoingMessage {
 pub struct GameObject {
     pos: Position,
     ori: Orientation,
-    mesh: Vec<f64>,
+    obj_type: ObjectType,
 }
 
 /*fn createPlayer(&mut world: &mut HashMap<int, GameObject>) {
@@ -165,7 +165,7 @@ fn get_player(world: &mut HashMap<int, GameObject>,
             let newplayer = GameObject {
                 pos: Position(0.0, 0.0, 0.0),
                 ori: Orientation(0.0, 0.0),
-                mesh: get_player_mesh()
+                obj_type: ObjectType::Player,
             };
             broadcast.send(ServerCommand::AddObject(playerid, newplayer.pos, newplayer.ori, ObjectType::Player));
             entry.set(newplayer)
