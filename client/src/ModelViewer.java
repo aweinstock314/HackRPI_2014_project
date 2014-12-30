@@ -92,11 +92,11 @@ public class ModelViewer extends AbstractGLWindow
         glcanv.requestFocus();
         try
         {
-            world.actors.put(-1L, new DrawObject(-5, 0, 0, 0, 0, "sphere",
+            world.actors.put(-1L, new ModeledObject(-5, 0, 0, 0, 0, "sphere",
                 (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json"))));
-            world.actors.put(-2L, new DrawObject( 0, 0, 0, 0, 0, "cylinder",
+            world.actors.put(-2L, new ModeledObject( 0, 0, 0, 0, 0, "cylinder",
                 (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json"))));
-            world.actors.put(-3L, new DrawObject( 5, 0, 0, 0, 0, "triprism",
+            world.actors.put(-3L, new ModeledObject( 5, 0, 0, 0, 0, "triprism",
                 (JSONArray)JSONValue.parse(new FileReader("unit_triprism.json"))));
         }
         catch(Exception e) { e.printStackTrace(); }

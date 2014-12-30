@@ -61,7 +61,7 @@ public class ServerSyncher implements Runnable {
     }
 
     private void addObject(long i, JSONObject posData, JSONObject orData, String type) {
-        DrawObject newObj = new DrawObject(type, getModel(type));
+        DrawObject newObj = new ModeledObject(type, getModel(type));
         world.actors.put(i, newObj);
         setPosition(i, posData);
         setOrientation(i, orData);
