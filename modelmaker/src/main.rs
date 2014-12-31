@@ -69,14 +69,17 @@ fn make_player_model() -> Vec<f64> {
     player_model
 }
 
+fn write_model(fname: &str, model: &Vec<f64>) {
+    File::create(&Path::new(fname)).write_line(json::encode(model).as_slice());
+}
+
 fn main() {
     let unit_sphere = make_sphereoid(50, 50, 1.0);
     let unit_cylinder = make_cylinder(25, 1.0, 1.0);
     let unit_triprism = make_cylinder(3, 0.5, 1.0);
     let player_model = make_player_model();
-    File::create(&Path::new("unit_sphere.json")).write_line(json::encode(&unit_sphere).as_slice());
-    File::create(&Path::new("unit_cylinder.json")).write_line(json::encode(&unit_cylinder).as_slice());
-    File::create(&Path::new("unit_triprism.json")).write_line(json::encode(&unit_triprism).as_slice());
-    File::create(&Path::new("player_model.json")).write_line(json::encode(&player_model).as_slice());
-    //println!("{}", json::encode(&unit_sphere));
+    write_model("unit_sphere.json", &unit_sphere);
+    write_model("unit_cylinder.json", &unit_cylinder);
+    write_model("unit_triprism.json", &unit_triprism);
+    write_model("player_model.json", &player_model);
 }
