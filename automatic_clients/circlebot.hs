@@ -1,7 +1,7 @@
 #!/usr/bin/env runghc
 -- Simple script that connects to the server and runs in circles.
 import Network
-import GHC.IO.Handle
+import System.IO
 import Control.Monad
 import Control.Concurrent (threadDelay)
 
@@ -18,6 +18,7 @@ turnAndMove h = mapM_ (hPutStr h) [moveForward 0.1, rotateCamera (-0.005) 0]
 
 main = do
     h <- connectTo "localhost" (PortNumber 51701)
+    hSetBuffering h NoBuffering
     forever $ do
         turnAndMove h
         delayMs 10
