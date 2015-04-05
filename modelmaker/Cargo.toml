@@ -3,3 +3,6 @@
 name = "modelmaker"
 version = "0.0.1"
 authors = ["Avi Weinstock <aweinstock314@gmail.com>"]
+
+[dependencies]
+rustc-serialize = "*"
