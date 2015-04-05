@@ -7,3 +7,4 @@ authors = ["Avi Weinstock <aweinstock314@gmail.com>"]
 [dependencies]
 time = "*"
 rustc-serialize = "*"
+libc = "*"
