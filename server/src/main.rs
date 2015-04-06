@@ -1,16 +1,15 @@
-#![feature(old_io)]
 extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
 use rustc_serialize::json;
-use std::old_io::{TcpListener, TcpStream, BufferedStream};
-use std::old_io::{Acceptor, Listener, Writer, BufferPrelude};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Vacant, Occupied};
-use std::sync::{Mutex, Arc};
+use std::io::{BufRead, BufStream, Write};
+use std::net::{TcpListener, TcpStream};
 use std::ops::Add;
-use std::thread::spawn;
 use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::{Mutex, Arc};
+use std::thread::spawn;
 
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = 2f64 * std::f64::consts::PI;
@@ -107,37 +106,37 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
     ServerCommand::RemoveObject(42),
 )}
 
-fn show_examples(mut stream: TcpStream, playernum: i64, transmit_playmove: Sender<(i64, PlayerCommand)>) {
+fn show_examples(mut stream: TcpStream, playernum: i64) {
     let seconds = time::get_time().sec;
-    println!("Received a connection from {:?} at time {:?} (player {:?}).", stream.peer_name(), seconds, playernum);
-    //stream.write_line(&json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).unwrap());
+    println!("Received a connection from {:?} at time {:?} (player {:?}).", stream.peer_addr(), seconds, playernum);
+    //write!(stream, "{}", &json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).unwrap()).unwrap();
     for cmd in example_servercommands().iter() {
-        stream.write_line(&json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).unwrap());
+        write!(stream, "{}", &json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).unwrap()).unwrap();
     }
     for &cmd in example_playercommands().iter() {
-        stream.write_line(&json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).unwrap());
+        write!(stream, "{}", &json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).unwrap()).unwrap();
     }
 }
 
-fn interact_with_client(mut stream: TcpStream,
+fn interact_with_client(stream: TcpStream,
                         playernum: i64,
                         receive_broadcast: Receiver<ServerCommand>,
                         transmit_playmove: Sender<(i64, PlayerCommand)>,
                         world: Arc<Mutex<HashMap<i64, GameObject>>>) {
-    println!("Player #{:?} joined ({:?}).", playernum, stream.peer_name());
-    let buffered = BufferedStream::new(stream.clone());
+    println!("Player #{:?} joined ({:?}).", playernum, stream.peer_addr());
+    let buffered = BufStream::new(stream.try_clone().unwrap());
     spawn(move || { process_input_from_client(buffered, playernum, transmit_playmove) });
     process_output_to_client(stream, playernum, receive_broadcast, world);
 }
 
-fn process_input_from_client(mut stream: BufferedStream<TcpStream>,
+fn process_input_from_client(stream: BufStream<TcpStream>,
                             playernum: i64,
                             transmit_playmove: Sender<(i64, PlayerCommand)>) {
     for line in stream.lines() {
         match line {
             Ok(line) => {
                 match json::decode(&line) {
-                    Ok(command) => { transmit_playmove.send((playernum, command)); }
+                    Ok(command) => { transmit_playmove.send((playernum, command)).unwrap(); }
                     Err(e) => { println!("Bad input from player #{:?}: {:?} (ignoring)", playernum, e); }
                 }
             }
@@ -150,10 +149,10 @@ fn process_output_to_client(mut stream: TcpStream,
                             playernum: i64,
                             receive_broadcast: Receiver<ServerCommand>,
                             world: Arc<Mutex<HashMap<i64, GameObject>>>) {
-    stream.write_line(&json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap());
-    stream.write_line(&json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap());
+    write!(stream, "{}", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()).unwrap();
+    write!(stream, "{}", &json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap()).unwrap();
     for action in receive_broadcast.iter() {
-        stream.write_line(&json::encode(&action).unwrap());
+        write!(stream, "{}", &json::encode(&action).unwrap()).unwrap();
     }
 }
 
@@ -171,7 +170,7 @@ fn get_player(world: &mut HashMap<i64, GameObject>,
                 ori: Orientation(0.0, 0.0),
                 obj_type: ObjectType::Player,
             };
-            broadcast.send(ServerCommand::AddObject(playerid, newplayer.pos, newplayer.ori, ObjectType::Player));
+            broadcast.send(ServerCommand::AddObject(playerid, newplayer.pos, newplayer.ori, ObjectType::Player)).unwrap();
             entry.insert(newplayer)
         }
         Occupied(entry) => { entry.into_mut() }
@@ -188,7 +187,7 @@ fn manage_world(world: Arc<Mutex<HashMap<i64, GameObject>>>,
                 broadcast: Sender<ServerCommand>,
                 player_moves: Receiver<(i64, PlayerCommand)>) {
     let broadcast_location = |obj: &GameObject, i: i64| {
-        broadcast.send(ServerCommand::SetPosition(i, obj.pos));
+        broadcast.send(ServerCommand::SetPosition(i, obj.pos)).unwrap();
     };
     for (playerid, action) in player_moves.iter() {
         drop(get_player(&mut *world.lock().unwrap(), playerid, broadcast.clone()));
@@ -215,7 +214,6 @@ fn manage_world(world: Arc<Mutex<HashMap<i64, GameObject>>>,
                 println!("Player #{:?} moves {:?} units up", playerid, delta);
                 let mut wrld = world.lock().unwrap();
                 let player = get_player(&mut *wrld, playerid, broadcast.clone());
-                let Orientation(theta, _) = player.ori;
                 player.pos = player.pos + Position(0.0, delta, 0.0);
                 println!("P#{:?} pos: {:?}", playerid, player.pos);
                 broadcast_location(player, playerid);
@@ -226,7 +224,7 @@ fn manage_world(world: Arc<Mutex<HashMap<i64, GameObject>>>,
                 let player = &mut get_player(&mut *wrld, playerid, broadcast.clone());
                 player.ori = player.ori + Orientation(theta, phi);
                 println!("P#{:?} ori: {:?}", playerid, player.ori);
-                broadcast.send(ServerCommand::SetOrientation(playerid, player.ori));
+                broadcast.send(ServerCommand::SetOrientation(playerid, player.ori)).unwrap();
             }
             PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); }
         }
@@ -259,13 +257,13 @@ fn rebroadcast_transmitter<T: Send+Clone>(r: Receiver<T>, ts: Arc<Mutex<Vec<Send
     for msg in r.iter() {
         let val = ts.lock().unwrap();
         for t in val.iter() {
-            t.send(msg.clone());
+            t.send(msg.clone()).unwrap();
         }
         drop(val);
     }
 }
 
-fn odeMainTest() {
+fn ode_main_test() {
     // transcribed from ODE's "demo_buggy" example
     unsafe {
         ode_bindgen::dInitODE();
@@ -276,12 +274,11 @@ fn odeMainTest() {
     }
 }
 
-// contains some code adapted from example at http://doc.rust-lang.org/std/io/net/tcp/struct.TcpListener.html
+// contains some code adapted from example at http://doc.rust-lang.org/std/net/struct.TcpListener.html
 fn main() {
     println!("current time: {:?}", time::get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
-    //let listener = TcpListener::bind("127.0.0.1:51701"); //large number for port chosen pseudorandomly
-    let listener = TcpListener::bind("0.0.0.0:51701"); //large number for port chosen pseudorandomly
+    let listener = TcpListener::bind(("0.0.0.0", 51701)).unwrap(); //large number for port chosen pseudorandomly
 
     let world = Arc::new(Mutex::new(HashMap::<i64, GameObject>::new()));
     let mut playernum: i64 = 0;
@@ -299,11 +296,8 @@ fn main() {
         spawn(move || { manage_world(wrld, transmit_broadcast, receive_playmove); });
     }
     //spawn(move || { receive_broadcast.rebroadcast(); });
-    
 
-    let mut acceptor = listener.listen();
-    
-    for stream in acceptor.incoming() {
+    for stream in listener.incoming() {
         match stream {
             Err(e) => { println!("Error accepting incoming connection: {:?}", e); return; }
             Ok(stream) => {
