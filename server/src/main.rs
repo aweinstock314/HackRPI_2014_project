@@ -52,7 +52,7 @@ pub enum PlayerCommand {
     Shoot,
 }
 
-#[derive(RustcEncodable, RustcDecodable, Clone, Copy)]
+#[derive(RustcEncodable, RustcDecodable, Clone, Copy, Debug)]
 pub enum ObjectType {
     Floor,
     Obstacle(i64),
@@ -60,7 +60,7 @@ pub enum ObjectType {
     Bullet,
 }
 
-#[derive(RustcEncodable, RustcDecodable, Clone)]
+#[derive(RustcEncodable, RustcDecodable, Clone, Debug)]
 pub enum ServerCommand {
     SetPosition(i64, Position),
     SetOrientation(i64, Orientation),
@@ -68,6 +68,10 @@ pub enum ServerCommand {
     RemoveObject(i64),
     SetPlayerNumber(i64),
     InitializeWorld(HashMap<i64, GameObject>),
+}
+
+pub enum ServerEvent {
+    StartConnection(TcpStream),
 }
 
 #[derive(RustcEncodable, RustcDecodable, Clone)]
@@ -82,7 +86,7 @@ pub struct OutgoingMessage {
     timestamp: i64,
 }
 
-#[derive(RustcEncodable, RustcDecodable, Clone)]
+#[derive(RustcEncodable, RustcDecodable, Clone, Debug)]
 pub struct GameObject {
     pos: Position,
     ori: Orientation,
@@ -149,10 +153,11 @@ fn process_output_to_client(mut stream: TcpStream,
                             playernum: i64,
                             receive_broadcast: Receiver<ServerCommand>,
                             world: Arc<Mutex<HashMap<i64, GameObject>>>) {
-    write!(stream, "{}", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()).unwrap();
-    write!(stream, "{}", &json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap()).unwrap();
+    write!(stream, "{}\n", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()).unwrap();
+    write!(stream, "{}\n", &json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap()).unwrap();
     for action in receive_broadcast.iter() {
-        write!(stream, "{}", &json::encode(&action).unwrap()).unwrap();
+        println!("{}", format!("Sending {:?} to client {}", action, playernum));
+        write!(stream, "{}\n", &json::encode(&action).unwrap()).unwrap();
     }
 }
 
@@ -256,8 +261,12 @@ fn rebroadcast_transmitter<T: Send+Clone>(r: Receiver<T>, ts: Arc<Mutex<Vec<Send
 {
     for msg in r.iter() {
         let val = ts.lock().unwrap();
+        println!("Transmitting to {} receivers.", val.len());
         for t in val.iter() {
-            t.send(msg.clone()).unwrap();
+            match t.send(msg.clone()) {
+                Ok(_) => (),
+                Err(e) => println!("Error sending message ({:?})", e),
+            }
         }
         drop(val);
     }
@@ -274,12 +283,22 @@ fn ode_main_test() {
     }
 }
 
+fn listener_loop(sender: Sender<ServerEvent>) {
+    let listener = TcpListener::bind(("0.0.0.0", 51701)).unwrap(); //large number for port chosen pseudorandomly
+    for stream in listener.incoming() {
+        match stream {
+            Err(e) => { println!("Error accepting incoming connection: {:?}", e); },
+            Ok(stream) => {
+                sender.send(ServerEvent::StartConnection(stream)).unwrap();
+            },
+        }
+    }
+}
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/net/struct.TcpListener.html
 fn main() {
     println!("current time: {:?}", time::get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
-    let listener = TcpListener::bind(("0.0.0.0", 51701)).unwrap(); //large number for port chosen pseudorandomly
-
     let world = Arc::new(Mutex::new(HashMap::<i64, GameObject>::new()));
     let mut playernum: i64 = 0;
 
@@ -288,8 +307,10 @@ fn main() {
 
     //let mut receive_broadcast = ReceiverMultiplexer::new(receive_broadcast_precursor);
     let transmitters = Arc::new(Mutex::new(vec!()));
-    let transmitters2 = transmitters.clone();
-    spawn(move || { rebroadcast_transmitter(receive_broadcast_precursor, transmitters2); });
+    {
+        let transmitters = transmitters.clone();
+        spawn(move || { rebroadcast_transmitter(receive_broadcast_precursor, transmitters); });
+    }
 
     {
         let wrld = world.clone();
@@ -297,10 +318,15 @@ fn main() {
     }
     //spawn(move || { receive_broadcast.rebroadcast(); });
 
-    for stream in listener.incoming() {
-        match stream {
-            Err(e) => { println!("Error accepting incoming connection: {:?}", e); return; }
-            Ok(stream) => {
+    let (transmit_event, receive_event) = channel();
+    {
+        let tx = transmit_event.clone();
+        spawn(move || { listener_loop(tx); });
+    }
+
+    for event in receive_event.iter() {
+        match event {
+            ServerEvent::StartConnection(stream) => {
                 playernum += 1;
                 let tpm = transmit_playmove.clone();
                 let (tx, rx) = channel();
