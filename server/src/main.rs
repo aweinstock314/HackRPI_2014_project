@@ -113,12 +113,12 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
 fn show_examples(mut stream: TcpStream, playernum: i64) {
     let seconds = time::get_time().sec;
     println!("Received a connection from {:?} at time {:?} (player {:?}).", stream.peer_addr(), seconds, playernum);
-    //write!(stream, "{}", &json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).unwrap()).unwrap();
+    //writeln!(stream, "{}", &json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).unwrap()).unwrap();
     for cmd in example_servercommands().iter() {
-        write!(stream, "{}", &json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).unwrap()).unwrap();
+        writeln!(stream, "{}", &json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).unwrap()).unwrap();
     }
     for &cmd in example_playercommands().iter() {
-        write!(stream, "{}", &json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).unwrap()).unwrap();
+        writeln!(stream, "{}", &json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).unwrap()).unwrap();
     }
 }
 
@@ -153,11 +153,11 @@ fn process_output_to_client(mut stream: TcpStream,
                             playernum: i64,
                             receive_broadcast: Receiver<ServerCommand>,
                             world: Arc<Mutex<HashMap<i64, GameObject>>>) {
-    write!(stream, "{}\n", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()).unwrap();
-    write!(stream, "{}\n", &json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap()).unwrap();
+    writeln!(stream, "{}", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()).unwrap();
+    writeln!(stream, "{}", &json::encode(&ServerCommand::InitializeWorld(world.lock().unwrap().clone())).unwrap()).unwrap();
     for action in receive_broadcast.iter() {
         println!("{}", format!("Sending {:?} to client {}", action, playernum));
-        write!(stream, "{}\n", &json::encode(&action).unwrap()).unwrap();
+        writeln!(stream, "{}", &json::encode(&action).unwrap()).unwrap();
     }
 }
 
