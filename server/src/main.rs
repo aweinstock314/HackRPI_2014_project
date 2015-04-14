@@ -8,8 +8,7 @@ use std::io;
 use std::io::{BufRead, BufStream, Write};
 use std::net::{TcpListener, TcpStream};
 use std::ops::Add;
-use std::sync::mpsc::{channel, Sender, Receiver};
-use std::sync::{Mutex, Arc};
+use std::sync::mpsc::{channel, Sender};
 use std::thread::spawn;
 
 static PI: f64 = std::f64::consts::PI;
@@ -74,6 +73,7 @@ pub enum ServerCommand {
 pub enum ServerControlMsg {
     StartConnection(TcpStream),
     BroadcastCommand(ServerCommand),
+    ProcessPlayerAction(i64, PlayerCommand),
 }
 
 #[derive(RustcEncodable, RustcDecodable, Clone)]
@@ -126,20 +126,22 @@ fn show_examples(mut stream: TcpStream, playernum: i64) {
 
 fn interact_with_client(stream: TcpStream,
                         playernum: i64,
-                        transmit_playmove: Sender<(i64, PlayerCommand)>) {
+                        transmit_servctl: Sender<ServerControlMsg>) {
     println!("Player #{:?} joined ({:?}).", playernum, stream.peer_addr());
     let buffered = BufStream::new(stream.try_clone().unwrap());
-    process_input_from_client(buffered, playernum, transmit_playmove);
+    process_input_from_client(buffered, playernum, transmit_servctl);
 }
 
 fn process_input_from_client(stream: BufStream<TcpStream>,
                             playernum: i64,
-                            transmit_playmove: Sender<(i64, PlayerCommand)>) {
+                            transmit_servctl: Sender<ServerControlMsg>) {
     for line in stream.lines() {
         match line {
             Ok(line) => {
                 match json::decode(&line) {
-                    Ok(command) => { transmit_playmove.send((playernum, command)).unwrap(); }
+                    Ok(command) => { transmit_servctl.send(
+                        ServerControlMsg::ProcessPlayerAction(playernum, command)
+                    ).unwrap(); }
                     Err(e) => { println!("Bad input from player #{:?}: {:?} (ignoring)", playernum, e); }
                 }
             }
@@ -191,53 +193,48 @@ fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
     Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
 }
 
-fn manage_world(world: Arc<Mutex<HashMap<i64, GameObject>>>,
-                broadcast: Sender<ServerControlMsg>,
-                player_moves: Receiver<(i64, PlayerCommand)>) {
+fn process_player_action(world: &mut HashMap<i64, GameObject>,
+                         broadcast: Sender<ServerControlMsg>,
+                         playerid: i64,
+                         action: PlayerCommand) {
     let broadcast_location = |obj: &GameObject, i: i64| {
         broadcast.send(ServerControlMsg::BroadcastCommand(ServerCommand::SetPosition(i, obj.pos))).unwrap();
     };
-    for (playerid, action) in player_moves.iter() {
-        drop(get_player(&mut *world.lock().unwrap(), playerid, broadcast.clone()));
-        match action {
-            PlayerCommand::MoveForward(delta) => {
-                println!("Player #{:?} moves {:?} units forward", playerid, delta);
-                let mut wrld = world.lock().unwrap();
-                let player = get_player(&mut *wrld, playerid, broadcast.clone());
-                let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, -theta + PI/2.0);
-                println!("P#{:?} pos: {:?}", playerid, player.pos);
-                broadcast_location(player, playerid);
-            }
-            PlayerCommand::MoveSideways(delta) => {
-                println!("Player #{:?} moves {:?} units to their right", playerid, delta);
-                let mut wrld = world.lock().unwrap();
-                let player = get_player(&mut *wrld, playerid, broadcast.clone());
-                let Orientation(theta, _) = player.ori;
-                player.pos = apply_polar_movement(player.pos, delta, -theta);
-                println!("P#{:?} pos: {:?}", playerid, player.pos);
-                broadcast_location(player, playerid);
-            }
-            PlayerCommand::MoveUp(delta) => {
-                println!("Player #{:?} moves {:?} units up", playerid, delta);
-                let mut wrld = world.lock().unwrap();
-                let player = get_player(&mut *wrld, playerid, broadcast.clone());
-                player.pos = player.pos + Position(0.0, delta, 0.0);
-                println!("P#{:?} pos: {:?}", playerid, player.pos);
-                broadcast_location(player, playerid);
-            }
-            PlayerCommand::RotateCamera(Orientation(theta, phi)) => {
-                println!("Player #{:?} rotates by ({:?}, {:?})", playerid, theta, phi);
-                let mut wrld = world.lock().unwrap();
-                let player = &mut get_player(&mut *wrld, playerid, broadcast.clone());
-                player.ori = player.ori + Orientation(theta, phi);
-                println!("P#{:?} ori: {:?}", playerid, player.ori);
-                broadcast.send(ServerControlMsg::BroadcastCommand(
-                    ServerCommand::SetOrientation(playerid, player.ori)
-                )).unwrap();
-            }
-            PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); }
+    drop(get_player(world, playerid, broadcast.clone()));
+    match action {
+        PlayerCommand::MoveForward(delta) => {
+            println!("Player #{:?} moves {:?} units forward", playerid, delta);
+            let player = get_player(world, playerid, broadcast.clone());
+            let Orientation(theta, _) = player.ori;
+            player.pos = apply_polar_movement(player.pos, delta, -theta + PI/2.0);
+            println!("P#{:?} pos: {:?}", playerid, player.pos);
+            broadcast_location(player, playerid);
         }
+        PlayerCommand::MoveSideways(delta) => {
+            println!("Player #{:?} moves {:?} units to their right", playerid, delta);
+            let player = get_player(world, playerid, broadcast.clone());
+            let Orientation(theta, _) = player.ori;
+            player.pos = apply_polar_movement(player.pos, delta, -theta);
+            println!("P#{:?} pos: {:?}", playerid, player.pos);
+            broadcast_location(player, playerid);
+        }
+        PlayerCommand::MoveUp(delta) => {
+            println!("Player #{:?} moves {:?} units up", playerid, delta);
+            let player = get_player(world, playerid, broadcast.clone());
+            player.pos = player.pos + Position(0.0, delta, 0.0);
+            println!("P#{:?} pos: {:?}", playerid, player.pos);
+            broadcast_location(player, playerid);
+        }
+        PlayerCommand::RotateCamera(Orientation(theta, phi)) => {
+            println!("Player #{:?} rotates by ({:?}, {:?})", playerid, theta, phi);
+            let player = &mut get_player(world, playerid, broadcast.clone());
+            player.ori = player.ori + Orientation(theta, phi);
+            println!("P#{:?} ori: {:?}", playerid, player.ori);
+            broadcast.send(ServerControlMsg::BroadcastCommand(
+                ServerCommand::SetOrientation(playerid, player.ori)
+            )).unwrap();
+        }
+        PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); }
     }
 }
 
@@ -268,7 +265,7 @@ fn listener_loop(sender: Sender<ServerControlMsg>) {
 fn main() {
     println!("current time: {:?}", time::get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
-    let world = Arc::new(Mutex::new(HashMap::<i64, GameObject>::new()));
+    let mut world = HashMap::<i64, GameObject>::new();
     let mut playernum: i64 = 0;
 
     let (transmit_servctl, receive_servctl) = channel();
@@ -278,22 +275,16 @@ fn main() {
     }
 
     let mut connections = HashMap::<i64, TcpStream>::new();
-    let (transmit_playmove, receive_playmove) = channel();
-
-    {
-        let world = world.clone();
-        spawn(move || { manage_world(world, transmit_servctl, receive_playmove); });
-    }
 
     for servctl in receive_servctl.iter() {
         match servctl {
             ServerControlMsg::StartConnection(mut stream) => {
                 playernum += 1;
                 connections.insert(playernum, stream.try_clone().unwrap());
-                send_initialization_to_client(&mut stream, playernum, &world.lock().unwrap()).unwrap();
+                send_initialization_to_client(&mut stream, playernum, &world).unwrap();
                 {
-                    let tpm = transmit_playmove.clone();
-                    spawn(move || { interact_with_client(stream, playernum, tpm); });
+                    let tx = transmit_servctl.clone();
+                    spawn(move || { interact_with_client(stream, playernum, tx); });
                 }
             },
             ServerControlMsg::BroadcastCommand(action) => {
@@ -304,6 +295,10 @@ fn main() {
                     }
                 }
             },
+            ServerControlMsg::ProcessPlayerAction(pid, action) => {
+                process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+            }
+
         }
     }
 }
