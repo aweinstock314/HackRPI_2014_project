@@ -74,6 +74,7 @@ pub enum ServerControlMsg {
     StartConnection(TcpStream),
     BroadcastCommand(ServerCommand),
     ProcessPlayerAction(i64, PlayerCommand),
+    DisconnectPlayer(i64),
 }
 
 #[derive(RustcEncodable, RustcDecodable, Clone)]
@@ -148,6 +149,7 @@ fn process_input_from_client(stream: BufStream<TcpStream>,
             Err(e) => { println!("Some error occurred reading a line: {:?}", e); }
         }
     }
+    transmit_servctl.send(ServerControlMsg::DisconnectPlayer(playernum)).unwrap();
 }
 
 fn send_initialization_to_client(stream: &mut TcpStream,
@@ -290,7 +292,6 @@ fn main() {
             ServerControlMsg::BroadcastCommand(action) => {
                 for (&playernum, stream) in connections.iter_mut() {
                     if let Err(e) = send_action_to_client(stream, playernum, &action) {
-                        // TODO: handle disconnection properly
                         println!("Sending {:?} to client {} failed ({:?}).", action, playernum, e);
                     }
                 }
@@ -298,7 +299,12 @@ fn main() {
             ServerControlMsg::ProcessPlayerAction(pid, action) => {
                 process_player_action(&mut world, transmit_servctl.clone(), pid, action);
             }
-
+            ServerControlMsg::DisconnectPlayer(pid) => {
+                connections.remove(&pid);
+                transmit_servctl.send(ServerControlMsg::BroadcastCommand(
+                    ServerCommand::RemoveObject(pid)
+                )).unwrap();
+            }
         }
     }
 }
