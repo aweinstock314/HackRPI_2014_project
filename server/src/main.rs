@@ -1,3 +1,4 @@
+#![feature(collections)] // for Vec::drain
 extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
@@ -10,6 +11,7 @@ use std::net::{TcpListener, TcpStream};
 use std::ops::Add;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::spawn;
+use time::{Duration, get_time};
 
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = 2f64 * std::f64::consts::PI;
@@ -75,6 +77,7 @@ pub enum ServerControlMsg {
     BroadcastCommand(ServerCommand),
     ProcessPlayerAction(i64, PlayerCommand),
     DisconnectPlayer(i64),
+    Tick(Duration),
 }
 
 #[derive(RustcEncodable, RustcDecodable, Clone)]
@@ -114,7 +117,7 @@ fn example_servercommands() -> Vec<ServerCommand> { vec!(
 )}
 
 fn show_examples(mut stream: TcpStream, playernum: i64) {
-    let seconds = time::get_time().sec;
+    let seconds = get_time().sec;
     println!("Received a connection from {:?} at time {:?} (player {:?}).", stream.peer_addr(), seconds, playernum);
     //writeln!(stream, "{}", &json::encode(&IncomingMessage{command: PlayerCommand::MoveForward(0.5), timestamp: 0}).unwrap()).unwrap();
     for cmd in example_servercommands().iter() {
@@ -263,9 +266,21 @@ fn listener_loop(sender: Sender<ServerControlMsg>) {
     }
 }
 
+fn timer_loop(sender: Sender<ServerControlMsg>) {
+    let mut last_time = get_time();
+    loop {
+        let cur_time = get_time();
+        let elapsed = cur_time - last_time;
+        if elapsed >= Duration::milliseconds(10) {
+            last_time = cur_time;
+            sender.send(ServerControlMsg::Tick(elapsed)).unwrap();
+        }
+    }
+}
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/net/struct.TcpListener.html
 fn main() {
-    println!("current time: {:?}", time::get_time());
+    println!("current time: {:?}", get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
     let mut world = HashMap::<i64, GameObject>::new();
     let mut playernum: i64 = 0;
@@ -275,8 +290,14 @@ fn main() {
         let tx = transmit_servctl.clone();
         spawn(move || { listener_loop(tx); });
     }
+    {
+        let tx = transmit_servctl.clone();
+        spawn(move || { timer_loop(tx); });
+    }
 
     let mut connections = HashMap::<i64, TcpStream>::new();
+
+    let mut action_buffer = Vec::new();
 
     for servctl in receive_servctl.iter() {
         match servctl {
@@ -297,13 +318,22 @@ fn main() {
                 }
             },
             ServerControlMsg::ProcessPlayerAction(pid, action) => {
-                process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+                action_buffer.push((pid, action));
             }
             ServerControlMsg::DisconnectPlayer(pid) => {
                 connections.remove(&pid);
                 transmit_servctl.send(ServerControlMsg::BroadcastCommand(
                     ServerCommand::RemoveObject(pid)
                 )).unwrap();
+            }
+            ServerControlMsg::Tick(elapsed) => {
+                if let Some(ns) = elapsed.num_nanoseconds() {
+                    println!("{}ns have elapsed since last tick.", ns);
+                }
+                for (pid, action) in action_buffer.drain() {
+                    // TODO: rate-limiting actions per player per tick
+                    process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+                }
             }
         }
     }
