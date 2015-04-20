@@ -299,6 +299,11 @@ fn main() {
 
     let mut action_buffer = Vec::new();
 
+    let mut minimum_tick_time = Duration::days(1);
+    let mut maximum_tick_time = Duration::nanoseconds(0);
+    let mut total_elapsed_time = Duration::nanoseconds(0);
+    let mut total_elapsed_ticks = 0;
+
     for servctl in receive_servctl.iter() {
         match servctl {
             ServerControlMsg::StartConnection(mut stream) => {
@@ -327,8 +332,24 @@ fn main() {
                 )).unwrap();
             }
             ServerControlMsg::Tick(elapsed) => {
-                if let Some(ns) = elapsed.num_nanoseconds() {
-                    println!("{}ns have elapsed since last tick.", ns);
+                total_elapsed_time = total_elapsed_time + elapsed;
+                total_elapsed_ticks += 1;
+                if elapsed < minimum_tick_time {
+                    minimum_tick_time = elapsed;
+                }
+                if elapsed > maximum_tick_time {
+                    maximum_tick_time = elapsed;
+                }
+                if total_elapsed_ticks % 100 == 1 {
+                    if let Some(ns) = total_elapsed_time.num_nanoseconds() {
+                        println!("The current nanosecond/tick average is {}ns.", ns/total_elapsed_ticks);
+                    }
+                    if let Some(ns) = minimum_tick_time.num_nanoseconds() {
+                        println!("The shortest tick so far was {}ns.", ns);
+                    }
+                    if let Some(ns) = maximum_tick_time.num_nanoseconds() {
+                        println!("The longest tick so far was {}ns.", ns);
+                    }
                 }
                 for (pid, action) in action_buffer.drain() {
                     // TODO: rate-limiting actions per player per tick
