@@ -198,6 +198,16 @@ fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
     Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
 }
 
+fn get_cost_of_action(action: PlayerCommand) -> f64 {
+    match action {
+        PlayerCommand::MoveForward(x) => x.abs(),
+        PlayerCommand::MoveSideways(x) => x.abs(),
+        PlayerCommand::MoveUp(x) => x.abs(),
+        PlayerCommand::RotateCamera(_) => 0.0,
+        PlayerCommand::Shoot => 0.0,
+    }
+}
+
 fn process_player_action(world: &mut HashMap<i64, GameObject>,
                          broadcast: Sender<ServerControlMsg>,
                          playerid: i64,
@@ -351,9 +361,24 @@ fn main() {
                         println!("The longest tick so far was {}ns.", ns);
                     }
                 }
+                let movement_budget: f64 = 1.0;
+                let mut budgets_spent = HashMap::<i64, f64>::new();
                 for (pid, action) in action_buffer.drain() {
-                    // TODO: rate-limiting actions per player per tick
-                    process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+                    let cur_cost = get_cost_of_action(action);
+                    match budgets_spent.entry(pid) {
+                        Occupied(mut spent) => {
+                            if spent.get() + cur_cost <= movement_budget {
+                                *spent.get_mut() += cur_cost;
+                                process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+                            }
+                        }
+                        Vacant(spent) => {
+                            if cur_cost < movement_budget {
+                                spent.insert(cur_cost);
+                                process_player_action(&mut world, transmit_servctl.clone(), pid, action);
+                            }
+                        }
+                    }
                 }
             }
         }
