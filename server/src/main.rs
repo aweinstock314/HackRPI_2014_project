@@ -336,6 +336,7 @@ fn main() {
                 action_buffer.push((pid, action));
             }
             ServerControlMsg::DisconnectPlayer(pid) => {
+                world.remove(&pid);
                 connections.remove(&pid);
                 transmit_servctl.send(ServerControlMsg::BroadcastCommand(
                     ServerCommand::RemoveObject(pid)
