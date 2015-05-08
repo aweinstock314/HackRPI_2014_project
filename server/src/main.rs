@@ -1,4 +1,4 @@
-#![feature(collections)] // for Vec::drain
+#![feature(buf_stream, collections_drain)]
 extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
@@ -364,7 +364,7 @@ fn main() {
                 }
                 let movement_budget: f64 = 1.0;
                 let mut budgets_spent = HashMap::<i64, f64>::new();
-                for (pid, action) in action_buffer.drain() {
+                for (pid, action) in action_buffer.drain(..) {
                     let cur_cost = get_cost_of_action(action);
                     match budgets_spent.entry(pid) {
                         Occupied(mut spent) => {
