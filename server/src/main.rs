@@ -1,12 +1,13 @@
-#![feature(buf_stream, collections_drain)]
+#![feature(collections_drain)]
 extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
 use rustc_serialize::json;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Vacant, Occupied};
+use std::error::Error;
 use std::io;
-use std::io::{BufRead, BufStream, Write};
+use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpListener, TcpStream};
 use std::ops::Add;
 use std::sync::mpsc::{channel, Sender};
@@ -73,7 +74,7 @@ pub enum ServerCommand {
 }
 
 pub enum ServerControlMsg {
-    StartConnection(TcpStream),
+    StartConnection(Box<GameClientReader+Send>, Box<GameClientWriter+Send>),
     BroadcastCommand(ServerCommand),
     ProcessPlayerAction(i64, PlayerCommand),
     DisconnectPlayer(i64),
@@ -98,9 +99,6 @@ pub struct GameObject {
     ori: Orientation,
     obj_type: ObjectType,
 }
-
-/*fn createPlayer(&mut world: &mut HashMap<i64, GameObject>) {
-}*/
 
 fn example_playercommands() -> Vec<PlayerCommand> { vec!(
     PlayerCommand::MoveForward(0.5),
@@ -128,26 +126,63 @@ fn show_examples(mut stream: TcpStream, playernum: i64) {
     }
 }
 
-fn interact_with_client(stream: TcpStream,
-                        playernum: i64,
-                        transmit_servctl: Sender<ServerControlMsg>) {
-    println!("Player #{:?} joined ({:?}).", playernum, stream.peer_addr());
-    let buffered = BufStream::new(stream.try_clone().unwrap());
-    process_input_from_client(buffered, playernum, transmit_servctl);
+pub trait GameClientReader {
+    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>>;
 }
 
-fn process_input_from_client(stream: BufStream<TcpStream>,
+pub trait GameClientWriter {
+    fn send_message(&mut self, &ServerCommand) -> Result<(), Box<Error>>;
+}
+
+impl GameClientReader for Box<GameClientReader+Send> {
+    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
+        (**self).receive_message()
+    }
+}
+impl GameClientWriter for Box<GameClientWriter+Send> {
+    fn send_message(&mut self, command: &ServerCommand) -> Result<(), Box<Error>> {
+        (**self).send_message(command)
+    }
+}
+
+impl GameClientReader for io::Lines<BufReader<TcpStream>> {
+    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
+        /*self.by_ref().next().map(|res| res.map(|s| json::decode(&s).unwrap_or_else(|e| {
+            println!("Ignoring bad input ({:?}): \"{}\"", e, s);
+            // this returns from the innermost scope, is there a way to return from outermost scope?
+            return None;
+        })))*/
+        match self.by_ref().next() {
+            None => None,
+            Some(res) => Some(match res {
+                Err(e) => Err(Box::new(e)),
+                Ok(s) => match json::decode(&s) {
+                    Err(e) => {
+                        println!("Ignoring bad input ({:?}): \"{}\"", e, s);
+                        return None;
+                    }
+                    Ok(cmd) => Ok(cmd)
+                }
+            })
+        }
+    }
+}
+
+impl GameClientWriter for TcpStream {
+    fn send_message(&mut self, message: &ServerCommand) -> Result<(), Box<Error>> {
+        writeln!(self, "{}", &json::encode(message).unwrap())
+            .map_err(|e| Box::new(e) as Box<Error>)
+            .map(|_| ())
+    }
+}
+
+fn process_input_from_client<C: GameClientReader>(client: &mut C,
                             playernum: i64,
                             transmit_servctl: Sender<ServerControlMsg>) {
-    for line in stream.lines() {
-        match line {
-            Ok(line) => {
-                match json::decode(&line) {
-                    Ok(command) => { transmit_servctl.send(
-                        ServerControlMsg::ProcessPlayerAction(playernum, command)
-                    ).unwrap(); }
-                    Err(e) => { println!("Bad input from player #{:?}: {:?} (ignoring)", playernum, e); }
-                }
+    while let Some(res) = client.receive_message() {
+        match res {
+            Ok(command) => {
+                transmit_servctl.send(ServerControlMsg::ProcessPlayerAction(playernum, command)).unwrap();
             }
             Err(e) => { println!("Some error occurred reading a line: {:?}", e); }
         }
@@ -155,17 +190,17 @@ fn process_input_from_client(stream: BufStream<TcpStream>,
     transmit_servctl.send(ServerControlMsg::DisconnectPlayer(playernum)).unwrap();
 }
 
-fn send_initialization_to_client(stream: &mut TcpStream,
+fn send_initialization_to_client<C: GameClientWriter>(client: &mut C,
                                  playernum: i64,
-                                 world: &HashMap<i64, GameObject>) -> io::Result<()> {
-    try!(writeln!(stream, "{}", &json::encode(&ServerCommand::SetPlayerNumber(playernum)).unwrap()));
-    try!(writeln!(stream, "{}", &json::encode(&ServerCommand::InitializeWorld(world.clone())).unwrap()));
+                                 world: &HashMap<i64, GameObject>) -> Result<(), Box<Error>> {
+    try!(client.send_message(&ServerCommand::SetPlayerNumber(playernum)));
+    try!(client.send_message(&ServerCommand::InitializeWorld(world.clone())));
     Ok(())
 }
 
-fn send_action_to_client(stream: &mut TcpStream, playernum: i64, action: &ServerCommand) -> io::Result<()> {
+fn send_action_to_client<C: GameClientWriter>(client: &mut C, playernum: i64, action: &ServerCommand) -> Result<(), Box<Error>> {
     println!("{}", format!("Sending {:?} to client {}", action, playernum));
-    try!(writeln!(stream, "{}", &json::encode(action).unwrap()));
+    try!(client.send_message(action));
     Ok(())
 }
 
@@ -264,13 +299,14 @@ fn ode_main_test() {
     }
 }
 
-fn listener_loop(sender: Sender<ServerControlMsg>) {
+fn listener_loop_tcp(sender: Sender<ServerControlMsg>) {
     let listener = TcpListener::bind(("0.0.0.0", 51701)).unwrap(); //large number for port chosen pseudorandomly
     for stream in listener.incoming() {
         match stream {
             Err(e) => { println!("Error accepting incoming connection: {:?}", e); },
             Ok(stream) => {
-                sender.send(ServerControlMsg::StartConnection(stream)).unwrap();
+                let reader = BufReader::new(stream.try_clone().unwrap()).lines();
+                sender.send(ServerControlMsg::StartConnection(Box::new(reader), Box::new(stream))).unwrap();
             },
         }
     }
@@ -296,16 +332,10 @@ fn main() {
     let mut playernum: i64 = 0;
 
     let (transmit_servctl, receive_servctl) = channel();
-    {
-        let tx = transmit_servctl.clone();
-        spawn(move || { listener_loop(tx); });
-    }
-    {
-        let tx = transmit_servctl.clone();
-        spawn(move || { timer_loop(tx); });
-    }
+    { let tx = transmit_servctl.clone(); spawn(move || { listener_loop_tcp(tx); }); }
+    { let tx = transmit_servctl.clone(); spawn(move || { timer_loop(tx); }); }
 
-    let mut connections = HashMap::<i64, TcpStream>::new();
+    let mut connections = HashMap::<i64, Box<GameClientWriter+Send>>::new();
 
     let mut action_buffer = Vec::new();
 
@@ -316,13 +346,13 @@ fn main() {
 
     for servctl in receive_servctl.iter() {
         match servctl {
-            ServerControlMsg::StartConnection(mut stream) => {
+            ServerControlMsg::StartConnection(mut reader, mut writer) => {
                 playernum += 1;
-                connections.insert(playernum, stream.try_clone().unwrap());
-                send_initialization_to_client(&mut stream, playernum, &world).unwrap();
+                send_initialization_to_client(&mut writer, playernum, &world).unwrap();
+                connections.insert(playernum, writer);
                 {
                     let tx = transmit_servctl.clone();
-                    spawn(move || { interact_with_client(stream, playernum, tx); });
+                    spawn(move || { process_input_from_client(&mut reader, playernum, tx); });
                 }
             },
             ServerControlMsg::BroadcastCommand(action) => {
