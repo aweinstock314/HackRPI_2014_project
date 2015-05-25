@@ -8,3 +8,4 @@ authors = ["Avi Weinstock <aweinstock314@gmail.com>"]
 time = "*"
 rustc-serialize = "*"
 libc = "*"
+websocket = "*"

@@ -2,6 +2,7 @@
 extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
+extern crate websocket;
 use rustc_serialize::json;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Vacant, Occupied};
@@ -13,6 +14,8 @@ use std::ops::Add;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::spawn;
 use time::{Duration, get_time};
+use websocket::ws::receiver::Receiver as WSReceiver;
+use websocket::ws::message::Message as WSMessage;
 
 static PI: f64 = std::f64::consts::PI;
 static TAU: f64 = 2f64 * std::f64::consts::PI;
@@ -159,7 +162,7 @@ impl GameClientReader for io::Lines<BufReader<TcpStream>> {
                 Ok(s) => match json::decode(&s) {
                     Err(e) => {
                         println!("Ignoring bad input ({:?}): \"{}\"", e, s);
-                        return None;
+                        return self.receive_message();
                     }
                     Ok(cmd) => Ok(cmd)
                 }
@@ -173,6 +176,39 @@ impl GameClientWriter for TcpStream {
         writeln!(self, "{}", &json::encode(message).unwrap())
             .map_err(|e| Box::new(e) as Box<Error>)
             .map(|_| ())
+    }
+}
+
+impl GameClientReader for websocket::server::receiver::Receiver<websocket::stream::WebSocketStream> {
+    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
+        fn try_decode(rec: &mut websocket::server::receiver::Receiver<websocket::stream::WebSocketStream>, s: String) -> Option<Result<PlayerCommand, Box<Error>>> {
+            match json::decode(&s) {
+                Err(e) => {
+                    println!("Ignoring bad input ({:?}): \"{}\"", e, s);
+                    rec.receive_message()
+                },
+                Ok(cmd) => Some(Ok(cmd))
+            }
+        };
+        match self.recv_message_dataframes() {
+            Err(e) => Some(Err(Box::new(e))),
+            Ok(frames) => match websocket::message::Message::from_dataframes(frames) {
+                Err(e) => Some(Err(Box::new(e))),
+                Ok(websocket::message::Message::Text(s)) => try_decode(self, s),
+                Ok(websocket::message::Message::Binary(bs)) => match String::from_utf8(bs) {
+                    Ok(s) => try_decode(self, s),
+                    Err(e) => Some(Err(Box::new(e)))
+                },
+                Ok(_) => None
+            }
+        }
+    }
+}
+impl GameClientWriter for websocket::server::sender::Sender<websocket::stream::WebSocketStream> {
+    fn send_message(&mut self, message: &ServerCommand) -> Result<(), Box<Error>> {
+        websocket::ws::sender::Sender::send_message(self,
+            websocket::Message::Text(json::encode(message).unwrap())
+        ).map_err(|e| Box::new(e) as Box<Error>)
     }
 }
 
@@ -303,11 +339,28 @@ fn listener_loop_tcp(sender: Sender<ServerControlMsg>) {
     let listener = TcpListener::bind(("0.0.0.0", 51701)).unwrap(); //large number for port chosen pseudorandomly
     for stream in listener.incoming() {
         match stream {
-            Err(e) => { println!("Error accepting incoming connection: {:?}", e); },
+            Err(e) => { println!("Error accepting incoming TCP connection: {:?}", e); },
             Ok(stream) => {
+                println!("Accepted a TCP connection from {:?}.", stream.peer_addr());
                 let reader = BufReader::new(stream.try_clone().unwrap()).lines();
                 sender.send(ServerControlMsg::StartConnection(Box::new(reader), Box::new(stream))).unwrap();
             },
+        }
+    }
+}
+
+fn listener_loop_ws(sender: Sender<ServerControlMsg>) {
+    let listener = websocket::Server::bind(("0.0.0.0", 51702)).unwrap();
+    for connection in listener {
+        match connection.and_then(|c| c.read_request()) {
+            Err(e) => println!("Error reading incoming WS request: {:?}", e),
+            Ok(request) => match request.accept().send().map(|client| client.split()) {
+                Err(e) => println!("Error accepting incoming WS connection: {:?}", e),
+                Ok((writer, mut reader)) => {
+                    println!("Accepted a WS connection from {:?}.", reader.get_mut().peer_addr());
+                    sender.send(ServerControlMsg::StartConnection(Box::new(reader), Box::new(writer))).unwrap();
+                }
+            }
         }
     }
 }
@@ -333,6 +386,7 @@ fn main() {
 
     let (transmit_servctl, receive_servctl) = channel();
     { let tx = transmit_servctl.clone(); spawn(move || { listener_loop_tcp(tx); }); }
+    { let tx = transmit_servctl.clone(); spawn(move || { listener_loop_ws(tx); }); }
     { let tx = transmit_servctl.clone(); spawn(move || { timer_loop(tx); }); }
 
     let mut connections = HashMap::<i64, Box<GameClientWriter+Send>>::new();
