@@ -14,6 +14,7 @@ use std::ops::Add;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::spawn;
 use time::{Duration, get_time};
+use websocket::result::WebSocketError;
 use websocket::ws::receiver::Receiver as WSReceiver;
 use websocket::ws::message::Message as WSMessage;
 
@@ -181,7 +182,8 @@ impl GameClientWriter for TcpStream {
 
 impl GameClientReader for websocket::server::receiver::Receiver<websocket::stream::WebSocketStream> {
     fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
-        fn try_decode(rec: &mut websocket::server::receiver::Receiver<websocket::stream::WebSocketStream>, s: String) -> Option<Result<PlayerCommand, Box<Error>>> {
+        fn try_decode(rec: &mut websocket::server::receiver::Receiver<websocket::stream::WebSocketStream>,
+                        s: String) -> Option<Result<PlayerCommand, Box<Error>>> {
             match json::decode(&s) {
                 Err(e) => {
                     println!("Ignoring bad input ({:?}): \"{}\"", e, s);
@@ -191,6 +193,7 @@ impl GameClientReader for websocket::server::receiver::Receiver<websocket::strea
             }
         };
         match self.recv_message_dataframes() {
+            Err(WebSocketError::NoDataAvailable) => None,
             Err(e) => Some(Err(Box::new(e))),
             Ok(frames) => match websocket::message::Message::from_dataframes(frames) {
                 Err(e) => Some(Err(Box::new(e))),
