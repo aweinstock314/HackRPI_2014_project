@@ -14,6 +14,9 @@ public class ModelCache {
     static {
         try {
             populate("Player", "player_model.json");
+            populate("Sphere","unit_sphere.json");
+            populate("Cylinder","unit_cylinder.json");
+            populate("Triprism","unit_triprism.json");
         }
         catch(Exception e) { e.printStackTrace(); }
     }

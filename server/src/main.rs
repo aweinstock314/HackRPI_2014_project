@@ -62,7 +62,7 @@ pub enum PlayerCommand {
 #[derive(RustcEncodable, RustcDecodable, Clone, Copy, Debug)]
 pub enum ObjectType {
     Floor,
-    Obstacle(i64),
+    Sphere, Cylinder, Triprism, // arbitrary geometric obstacles
     Player,
     Bullet,
 }
@@ -289,7 +289,6 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
     let broadcast_location = |obj: &GameObject, i: i64| {
         broadcast.send(ServerControlMsg::BroadcastCommand(ServerCommand::SetPosition(i, obj.pos))).unwrap();
     };
-    drop(get_player(world, playerid, broadcast.clone()));
     match action {
         PlayerCommand::MoveForward(delta) => {
             println!("Player #{:?} moves {:?} units forward", playerid, delta);
@@ -380,12 +379,32 @@ fn timer_loop(sender: Sender<ServerControlMsg>) {
     }
 }
 
+fn place_initial_obstacles(world: &mut HashMap<i64, GameObject>) {
+    world.insert(-1, GameObject {
+        pos: Position(-5.0, 10.0, 0.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Sphere,
+    });
+    world.insert(-2, GameObject {
+        pos: Position(0.0, 10.0, 5.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Cylinder,
+    });
+    world.insert(-3, GameObject {
+        pos: Position(5.0, 10.0, 0.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Triprism,
+    });
+}
+
 // contains some code adapted from example at http://doc.rust-lang.org/std/net/struct.TcpListener.html
 fn main() {
     println!("current time: {:?}", get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
     let mut world = HashMap::<i64, GameObject>::new();
     let mut playernum: i64 = 0;
+
+    place_initial_obstacles(&mut world);
 
     let (transmit_servctl, receive_servctl) = channel();
     { let tx = transmit_servctl.clone(); spawn(move || { listener_loop_tcp(tx); }); }
@@ -407,6 +426,8 @@ fn main() {
                 playernum += 1;
                 send_initialization_to_client(&mut writer, playernum, &world).unwrap();
                 connections.insert(playernum, writer);
+                // create & broadcast creation of player object
+                drop(get_player(&mut world, playernum, transmit_servctl.clone()));
                 {
                     let tx = transmit_servctl.clone();
                     spawn(move || { process_input_from_client(&mut reader, playernum, tx); });

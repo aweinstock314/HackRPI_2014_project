@@ -90,16 +90,6 @@ public class ModelViewer extends AbstractGLWindow
         GLCanvas glcanv = constructorAux(w, h, 60);
         glcanv.addKeyListener(smoother);
         glcanv.requestFocus();
-        try
-        {
-            world.actors.put(-1L, new ModeledObject(-5, 0, 0, 0, 0, "sphere",
-                (JSONArray)JSONValue.parse(new FileReader("unit_sphere.json"))));
-            world.actors.put(-2L, new ModeledObject( 0, 0, 0, 0, 0, "cylinder",
-                (JSONArray)JSONValue.parse(new FileReader("unit_cylinder.json"))));
-            world.actors.put(-3L, new ModeledObject( 5, 0, 0, 0, 0, "triprism",
-                (JSONArray)JSONValue.parse(new FileReader("unit_triprism.json"))));
-        }
-        catch(Exception e) { e.printStackTrace(); }
     }
     public static void main(String[] args)
     {
