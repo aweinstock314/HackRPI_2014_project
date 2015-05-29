@@ -243,8 +243,16 @@ fn send_action_to_client<C: GameClientWriter>(client: &mut C, playernum: i64, ac
     Ok(())
 }
 
-fn get_player_mesh() -> Vec<f64> {
-    vec!()
+// TODO: consider using lazy_static! instead
+fn get_mesh(ty: ObjectType) -> Vec<f64> {
+    match ty {
+        ObjectType::Floor => json::decode(include_str!("../../modelmaker/floor_model.json")).unwrap(),
+        ObjectType::Sphere => json::decode(include_str!("../../modelmaker/unit_sphere.json")).unwrap(),
+        ObjectType::Cylinder => json::decode(include_str!("../../modelmaker/unit_cylinder.json")).unwrap(),
+        ObjectType::Triprism => json::decode(include_str!("../../modelmaker/unit_triprism.json")).unwrap(),
+        ObjectType::Player => json::decode(include_str!("../../modelmaker/player_model.json")).unwrap(),
+        ObjectType::Bullet => unimplemented!(),
+    }
 }
 
 fn get_player(world: &mut HashMap<i64, GameObject>,
@@ -381,16 +389,21 @@ fn timer_loop(sender: Sender<ServerControlMsg>) {
 
 fn place_initial_obstacles(world: &mut HashMap<i64, GameObject>) {
     world.insert(-1, GameObject {
+        pos: Position(0.0, -1.0, 0.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Floor,
+    });
+    world.insert(-2, GameObject {
         pos: Position(-5.0, 10.0, 0.0),
         ori: Orientation(0.0, 0.0),
         obj_type: ObjectType::Sphere,
     });
-    world.insert(-2, GameObject {
+    world.insert(-3, GameObject {
         pos: Position(0.0, 10.0, 5.0),
         ori: Orientation(0.0, 0.0),
         obj_type: ObjectType::Cylinder,
     });
-    world.insert(-3, GameObject {
+    world.insert(-4, GameObject {
         pos: Position(5.0, 10.0, 0.0),
         ori: Orientation(0.0, 0.0),
         obj_type: ObjectType::Triprism,
@@ -399,10 +412,17 @@ fn place_initial_obstacles(world: &mut HashMap<i64, GameObject>) {
 
 // contains some code adapted from example at http://doc.rust-lang.org/std/net/struct.TcpListener.html
 fn main() {
+    unsafe { ode_bindgen::dInitODE(); }
     println!("current time: {:?}", get_time());
     println!("address of dWorldCreate: {:p}", &ode_bindgen::dWorldCreate);
     let mut world = HashMap::<i64, GameObject>::new();
     let mut playernum: i64 = 0;
+
+    println!("{:?}", std::str::from_utf8(unsafe {
+        std::ffi::CStr::from_ptr(ode_bindgen::dGetConfiguration()).to_bytes()
+    }));
+
+    println!("{:?}", get_mesh(ObjectType::Floor));
 
     place_initial_obstacles(&mut world);
 
@@ -492,4 +512,5 @@ fn main() {
             }
         }
     }
+    unsafe { ode_bindgen::dCloseODE(); }
 }

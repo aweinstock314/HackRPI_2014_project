@@ -13,6 +13,7 @@ public class ModelCache {
     }
     static {
         try {
+            populate("Floor", "floor_model.json");
             populate("Player", "player_model.json");
             populate("Sphere","unit_sphere.json");
             populate("Cylinder","unit_cylinder.json");
