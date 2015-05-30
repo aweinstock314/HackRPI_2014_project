@@ -38,7 +38,6 @@ public class SecondAttemptAtInput extends Abstract3DKeyListener
         y.add(delta);
         x.put("fields", y);
         ps.println(x);
-        System.out.println(x);
     }
     public void emitMoveSideways(float delta) {
         JSONObject x = new JSONObject();
@@ -47,7 +46,6 @@ public class SecondAttemptAtInput extends Abstract3DKeyListener
         y.add(delta);
         x.put("fields", y);
         ps.println(x);
-        System.out.println(x);
     }
     public void emitMoveUp(float delta) {
         JSONObject x = new JSONObject();
@@ -56,11 +54,9 @@ public class SecondAttemptAtInput extends Abstract3DKeyListener
         y.add(delta);
         x.put("fields", y);
         ps.println(x);
-        System.out.println(x);
     }
     public void emitShoot() {
         ps.println("\"Shoot\"");
-        System.out.println("\"Shoot\"");
     }
     public void emitRotateCamera(float theta, float phi) {
         JSONObject x = new JSONObject();
@@ -72,6 +68,5 @@ public class SecondAttemptAtInput extends Abstract3DKeyListener
         y.add(z);
         x.put("fields", y);
         ps.println(x);
-        System.out.println(x);
     }
 }

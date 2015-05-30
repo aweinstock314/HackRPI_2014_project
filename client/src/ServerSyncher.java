@@ -72,7 +72,7 @@ public class ServerSyncher implements Runnable {
                     JSONObject world = (JSONObject)fields.get(0);
                     for(Object o : world.entrySet()) {
                         Map.Entry e = (Map.Entry)o;
-                        System.out.printf("(%s, %s)\n", e.getKey(), e.getValue());
+                        //System.out.printf("(%s, %s)\n", e.getKey(), e.getValue());
                         long i = Long.parseLong((String)e.getKey(), 10);
                         JSONObject posData = (JSONObject)((JSONObject)e.getValue()).get("pos");
                         JSONObject orData = (JSONObject)((JSONObject)e.getValue()).get("ori");

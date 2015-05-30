@@ -44,11 +44,11 @@ public abstract class Abstract3DKeyListener implements KeyListener
             case k_shoot: shoot(); break;
             default: changed = false; break;
         }
-        if(changed)
+        /*if(changed)
         {
             System.out.printf("Current position: (%f, %f, %f)\n", x, y, z);
             System.out.printf("Current orientation: (%f, %f)\n", rad2deg(theta), rad2deg(phi));
-        }
+        }*/
     }
     public void keyReleased(KeyEvent e) {}
     public void keyTyped(KeyEvent e) {}
