@@ -1,0 +1,21 @@
+<html>
+<head>
+<title>HackRPI 2014 project (TODO: naming)</title>
+<script>
+function log(x) {
+    document.getElementById("debugging_log").textContent += x + "\n";
+}
+
+function main() {
+    var ws = new WebSocket("ws://localhost:51702");
+    ws.onmessage = function(event) {
+        log(event.data);
+    };
+}
+</script>
+</head>
+<body onload="main();">
+<canvas width="640" height="480"></canvas>
+<br />
+<pre id="debugging_log"></pre>
+</body>
