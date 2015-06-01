@@ -40,11 +40,20 @@ var state = makeInitialState();
 function main() {
     var ws = new WebSocket("ws://localhost:51702");
     var handlers = {};
-    handlers["SetPlayerNumber"] = function(state, msg) {
-        state.playerNumber = msg.fields[0] | 0;
+    handlers["SetPosition"] = function(state, msg) {
+        state.world[msg.fields[0] | 0].pos = unserializeTuple(msg.fields[1]);
+    };
+    handlers["SetOrientation"] = function(state, msg) {
+        state.world[msg.fields[0] | 0].ori = unserializeTuple(msg.fields[1]);
     };
     handlers["AddObject"] = function(state, msg) {
         state.addObject(msg.fields[0], msg.fields[1]);
+    };
+    handlers["RemoveObject"] = function(state, msg) {
+        delete state.world[msg.fields[0] | 0];
+    };
+    handlers["SetPlayerNumber"] = function(state, msg) {
+        state.playerNumber = msg.fields[0] | 0;
     };
     handlers["InitializeWorld"] = function(state, msg) {
         msg.fields[0].dictForEach(state.addObject);
