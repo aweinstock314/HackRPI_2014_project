@@ -52,11 +52,15 @@ public class ServerSyncher implements Runnable {
         world.actors.get(i).setOrientation(th,ph);
     }
 
-    private void addObject(long i, JSONObject posData, JSONObject orData, String type) {
+    private void addObject(long id, JSONObject obj) {
+        JSONObject posData = (JSONObject)(obj.get("pos"));
+        JSONObject orData = (JSONObject)(obj.get("ori"));
+        String type = (String)(obj.get("obj_type"));
+
         DrawObject newObj = new ModeledObject(type, getModel(type));
-        world.actors.put(i, newObj);
-        setPosition(i, posData);
-        setOrientation(i, orData);
+        world.actors.put(id, newObj);
+        setPosition(id, posData);
+        setOrientation(id, orData);
     }
 
     private void parseAndUpdateWorld(String jsonString) {
@@ -74,10 +78,7 @@ public class ServerSyncher implements Runnable {
                         Map.Entry e = (Map.Entry)o;
                         //System.out.printf("(%s, %s)\n", e.getKey(), e.getValue());
                         long i = Long.parseLong((String)e.getKey(), 10);
-                        JSONObject posData = (JSONObject)((JSONObject)e.getValue()).get("pos");
-                        JSONObject orData = (JSONObject)((JSONObject)e.getValue()).get("ori");
-                        String type = (String)((JSONObject)e.getValue()).get("obj_type");
-                        addObject(i, posData, orData, type);
+                        addObject(i, (JSONObject)e.getValue());
                     }
                 }
                 else {
@@ -89,10 +90,7 @@ public class ServerSyncher implements Runnable {
                         JSONObject orData = (JSONObject)fields.get(1);
                         setOrientation(i, orData);
                     } else if(cmdType.equals("AddObject")) {
-                        JSONObject posData = (JSONObject)fields.get(1);
-                        JSONObject orData = (JSONObject)fields.get(2);
-                        String type = (String)fields.get(3);
-                        addObject(i, posData, orData, type);
+                        addObject(i, (JSONObject)fields.get(1));
                     } else if(cmdType.equals("RemoveObject")){
                         world.actors.remove(i);
                     } else if(cmdType.equals("SetPlayerNumber")) {

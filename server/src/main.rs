@@ -71,7 +71,7 @@ pub enum ObjectType {
 pub enum ServerCommand {
     SetPosition(i64, Position),
     SetOrientation(i64, Orientation),
-    AddObject(i64, Position, Orientation, ObjectType),
+    AddObject(i64, GameObject),
     RemoveObject(i64),
     SetPlayerNumber(i64),
     InitializeWorld(HashMap<i64, GameObject>),
@@ -114,7 +114,11 @@ fn example_playercommands() -> Vec<PlayerCommand> { vec!(
 fn example_servercommands() -> Vec<ServerCommand> { vec!(
     ServerCommand::SetPosition(42, Position(50.0, 10.0, 25.0)),
     ServerCommand::SetOrientation(42, Orientation(0.0, 0.0)),
-    ServerCommand::AddObject(42, Position(0.0, 0.0, 0.0), Orientation(0.0, 0.0), ObjectType::Player),
+    ServerCommand::AddObject(42, GameObject {
+        pos: Position(0.0, 0.0, 0.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Player
+    }),
     ServerCommand::RemoveObject(42),
 )}
 
@@ -266,7 +270,7 @@ fn get_player(world: &mut HashMap<i64, GameObject>,
                 obj_type: ObjectType::Player,
             };
             broadcast.send(ServerControlMsg::BroadcastCommand(
-                ServerCommand::AddObject(playerid, newplayer.pos, newplayer.ori, ObjectType::Player)
+                ServerCommand::AddObject(playerid, newplayer.clone())
             )).unwrap();
             entry.insert(newplayer)
         }

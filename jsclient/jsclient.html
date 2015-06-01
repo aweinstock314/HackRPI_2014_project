@@ -2,14 +2,60 @@
 <head>
 <title>HackRPI 2014 project (TODO: naming)</title>
 <script>
+Object.prototype.dictForEach = function(f) {
+    for(var key in this) {
+        if(this.hasOwnProperty(key)) {
+            f(key, this[key]);
+        }
+    }
+};
+
 function log(x) {
     document.getElementById("debugging_log").textContent += x + "\n";
 }
 
+function unserializeTuple(obj) {
+    var tup = new Array();
+    obj.dictForEach(function(k, v) {
+        var result = /_field([0-9]+)/.exec(k);
+        if(result) { tup[result[1]|0] = v; };
+    });
+    return tup;
+}
+
+function makeInitialState() {
+    var state = {};
+    state.playerNumber = 0;
+    state.world = {};
+    state.addObject = function(id, obj) {
+        obj.pos = unserializeTuple(obj.pos);
+        obj.ori = unserializeTuple(obj.ori);
+        state.world[id | 0] = obj;
+    };
+    return state;
+}
+
+var state = makeInitialState();
+
 function main() {
     var ws = new WebSocket("ws://localhost:51702");
+    var handlers = {};
+    handlers["SetPlayerNumber"] = function(state, msg) {
+        state.playerNumber = msg.fields[0] | 0;
+    };
+    handlers["AddObject"] = function(state, msg) {
+        state.addObject(msg.fields[0], msg.fields[1]);
+    };
+    handlers["InitializeWorld"] = function(state, msg) {
+        msg.fields[0].dictForEach(state.addObject);
+    };
+    function defaultHandler(state, msg) {
+        log("Unknown command: " + msg.variant);
+    };
     ws.onmessage = function(event) {
         log(event.data);
+        var msg = JSON.parse(event.data);
+        (handlers[msg.variant] || defaultHandler)(state, msg);
     };
 }
 </script>
