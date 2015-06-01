@@ -3,6 +3,7 @@ extern crate libc;
 extern crate rustc_serialize;
 extern crate time;
 extern crate websocket;
+use ode_bindgen::dReal;
 use rustc_serialize::json;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Vacant, Occupied};
@@ -15,19 +16,18 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread::spawn;
 use time::{Duration, get_time};
 use websocket::result::WebSocketError;
-use websocket::ws::receiver::Receiver as WSReceiver;
 use websocket::ws::message::Message as WSMessage;
+use websocket::ws::receiver::Receiver as WSReceiver;
 
-static PI: f64 = std::f64::consts::PI;
-static TAU: f64 = 2f64 * std::f64::consts::PI;
+static TAU: dReal = (2.0 * std::f64::consts::PI) as dReal;
 
 // hack around cargo not respecting "proper" link attributes
 #[link(name = "ode")] extern {}
 mod ode_bindgen;
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Debug, Copy)]
-//pub struct Position { x: f64, y: f64, z: f64 }
-pub struct Position (f64, f64, f64);
+//pub struct Position { x: dReal, y: dReal, z: dReal }
+pub struct Position (dReal, dReal, dReal);
 
 impl Add for Position {
     type Output = Position;
@@ -38,8 +38,8 @@ impl Add for Position {
     }
 }
 #[derive(RustcEncodable, RustcDecodable, Clone, Debug, Copy)]
-//pub struct Orientation { theta: f64, phi: f64 }
-pub struct Orientation (f64, f64);
+//pub struct Orientation { theta: dReal, phi: dReal }
+pub struct Orientation (dReal, dReal);
 
 impl Add for Orientation {
     type Output = Orientation;
@@ -52,9 +52,9 @@ impl Add for Orientation {
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Copy)]
 pub enum PlayerCommand {
-    MoveForward(f64),
-    MoveSideways(f64),
-    MoveUp(f64), //possibly replace with "Jump" when transitioning to non-free-movement?
+    MoveForward(dReal),
+    MoveSideways(dReal),
+    MoveUp(dReal), //possibly replace with "Jump" when transitioning to non-free-movement?
     RotateCamera(Orientation),
     Shoot,
 }
@@ -248,7 +248,7 @@ fn send_action_to_client<C: GameClientWriter>(client: &mut C, playernum: i64, ac
 }
 
 // TODO: consider using lazy_static! instead
-fn get_mesh(ty: ObjectType) -> Vec<f64> {
+fn get_mesh(ty: ObjectType) -> Vec<dReal> {
     match ty {
         ObjectType::Floor => json::decode(include_str!("../../modelmaker/floor_model.json")).unwrap(),
         ObjectType::Sphere => json::decode(include_str!("../../modelmaker/unit_sphere.json")).unwrap(),
@@ -279,12 +279,12 @@ fn get_player(world: &mut HashMap<i64, GameObject>,
     player
 }
 
-fn apply_polar_movement(pos: Position, magnitude: f64, theta: f64) -> Position {
+fn apply_polar_movement(pos: Position, magnitude: dReal, theta: dReal) -> Position {
     let Position(x, y, z) = pos;
     Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
 }
 
-fn get_cost_of_action(action: PlayerCommand) -> f64 {
+fn get_cost_of_action(action: PlayerCommand) -> dReal {
     match action {
         PlayerCommand::MoveForward(x) => x.abs(),
         PlayerCommand::MoveSideways(x) => x.abs(),
@@ -306,7 +306,7 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
             println!("Player #{:?} moves {:?} units forward", playerid, delta);
             let player = get_player(world, playerid, broadcast.clone());
             let Orientation(theta, _) = player.ori;
-            player.pos = apply_polar_movement(player.pos, delta, -theta + PI/2.0);
+            player.pos = apply_polar_movement(player.pos, delta, -theta + TAU/4.0);
             println!("P#{:?} pos: {:?}", playerid, player.pos);
             broadcast_location(player, playerid);
         }
@@ -494,8 +494,8 @@ fn main() {
                         println!("The longest tick so far was {}ns.", ns);
                     }
                 }
-                let movement_budget: f64 = 1.0;
-                let mut budgets_spent = HashMap::<i64, f64>::new();
+                let movement_budget: dReal = 1.0;
+                let mut budgets_spent = HashMap::<i64, dReal>::new();
                 for (pid, action) in action_buffer.drain(..) {
                     let cur_cost = get_cost_of_action(action);
                     match budgets_spent.entry(pid) {
