@@ -52,6 +52,7 @@ impl Add for Orientation {
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Copy)]
 pub enum PlayerCommand {
+    RequestModel(ObjectType), // TODO: some kind of DoS mitigation?
     MoveForward(dReal),
     MoveSideways(dReal),
     MoveUp(dReal), //possibly replace with "Jump" when transitioning to non-free-movement?
@@ -69,6 +70,7 @@ pub enum ObjectType {
 
 #[derive(RustcEncodable, RustcDecodable, Clone, Debug)]
 pub enum ServerCommand {
+    ProvideModel(ObjectType, Vec<dReal>),
     SetPosition(i64, Position),
     SetOrientation(i64, Orientation),
     AddObject(i64, GameObject),
@@ -79,6 +81,7 @@ pub enum ServerCommand {
 
 pub enum ServerControlMsg {
     StartConnection(Box<GameClientReader+Send>, Box<GameClientWriter+Send>),
+    IndividualCommand(i64, ServerCommand),
     BroadcastCommand(ServerCommand),
     ProcessPlayerAction(i64, PlayerCommand),
     DisconnectPlayer(i64),
@@ -286,6 +289,7 @@ fn apply_polar_movement(pos: Position, magnitude: dReal, theta: dReal) -> Positi
 
 fn get_cost_of_action(action: PlayerCommand) -> dReal {
     match action {
+        PlayerCommand::RequestModel(_) => 0.0,
         PlayerCommand::MoveForward(x) => x.abs(),
         PlayerCommand::MoveSideways(x) => x.abs(),
         PlayerCommand::MoveUp(x) => x.abs(),
@@ -295,16 +299,16 @@ fn get_cost_of_action(action: PlayerCommand) -> dReal {
 }
 
 fn process_player_action(world: &mut HashMap<i64, GameObject>,
-                         broadcast: Sender<ServerControlMsg>,
+                         sender: Sender<ServerControlMsg>,
                          playerid: i64,
                          action: PlayerCommand) {
     let broadcast_location = |obj: &GameObject, i: i64| {
-        broadcast.send(ServerControlMsg::BroadcastCommand(ServerCommand::SetPosition(i, obj.pos))).unwrap();
+        sender.send(ServerControlMsg::BroadcastCommand(ServerCommand::SetPosition(i, obj.pos))).unwrap();
     };
     match action {
         PlayerCommand::MoveForward(delta) => {
             println!("Player #{:?} moves {:?} units forward", playerid, delta);
-            let player = get_player(world, playerid, broadcast.clone());
+            let player = get_player(world, playerid, sender.clone());
             let Orientation(theta, _) = player.ori;
             player.pos = apply_polar_movement(player.pos, delta, -theta + TAU/4.0);
             println!("P#{:?} pos: {:?}", playerid, player.pos);
@@ -312,7 +316,7 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
         }
         PlayerCommand::MoveSideways(delta) => {
             println!("Player #{:?} moves {:?} units to their right", playerid, delta);
-            let player = get_player(world, playerid, broadcast.clone());
+            let player = get_player(world, playerid, sender.clone());
             let Orientation(theta, _) = player.ori;
             player.pos = apply_polar_movement(player.pos, delta, -theta);
             println!("P#{:?} pos: {:?}", playerid, player.pos);
@@ -320,21 +324,23 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
         }
         PlayerCommand::MoveUp(delta) => {
             println!("Player #{:?} moves {:?} units up", playerid, delta);
-            let player = get_player(world, playerid, broadcast.clone());
+            let player = get_player(world, playerid, sender.clone());
             player.pos = player.pos + Position(0.0, delta, 0.0);
             println!("P#{:?} pos: {:?}", playerid, player.pos);
             broadcast_location(player, playerid);
         }
         PlayerCommand::RotateCamera(Orientation(theta, phi)) => {
             println!("Player #{:?} rotates by ({:?}, {:?})", playerid, theta, phi);
-            let player = &mut get_player(world, playerid, broadcast.clone());
+            let player = &mut get_player(world, playerid, sender.clone());
             player.ori = player.ori + Orientation(theta, phi);
             println!("P#{:?} ori: {:?}", playerid, player.ori);
-            broadcast.send(ServerControlMsg::BroadcastCommand(
+            sender.send(ServerControlMsg::BroadcastCommand(
                 ServerCommand::SetOrientation(playerid, player.ori)
             )).unwrap();
         }
-        PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); }
+        PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); },
+        PlayerCommand::RequestModel(ty) => sender.send(ServerControlMsg::IndividualCommand(playerid,
+            ServerCommand::ProvideModel(ty, get_mesh(ty)))).unwrap(),
     }
 }
 
@@ -455,6 +461,12 @@ fn main() {
                 {
                     let tx = transmit_servctl.clone();
                     spawn(move || { process_input_from_client(&mut reader, playernum, tx); });
+                }
+            },
+            ServerControlMsg::IndividualCommand(playernum, action) => {
+                if let Some(Err(e)) = connections.get_mut(&playernum)
+                    .map(|w| send_action_to_client(w, playernum, &action)) {
+                    println!("Sending {:?} to client {} failed ({:?}).", action, playernum, e);
                 }
             },
             ServerControlMsg::BroadcastCommand(action) => {
