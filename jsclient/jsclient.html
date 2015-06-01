@@ -25,8 +25,9 @@ function unserializeTuple(obj) {
 
 function makeInitialState() {
     var state = {};
-    state.playerNumber = 0;
+    state.playerNumber = null;
     state.world = {};
+    state.models = {};
     state.addObject = function(id, obj) {
         obj.pos = unserializeTuple(obj.pos);
         obj.ori = unserializeTuple(obj.ori);
@@ -39,7 +40,11 @@ var state = makeInitialState();
 
 function main() {
     var ws = new WebSocket("ws://localhost:51702");
+    window.addEventListener("beforeunload", function(event) { ws.close(); });
     var handlers = {};
+    handlers["ProvideModel"] = function(state, msg) {
+        state.models[msg.fields[0]] = msg.fields[1];
+    };
     handlers["SetPosition"] = function(state, msg) {
         state.world[msg.fields[0] | 0].pos = unserializeTuple(msg.fields[1]);
     };
@@ -60,12 +65,17 @@ function main() {
     };
     function defaultHandler(state, msg) {
         log("Unknown command: " + msg.variant);
+        log(JSON.stringify(msg));
     };
     ws.onmessage = function(event) {
-        log(event.data);
         var msg = JSON.parse(event.data);
         (handlers[msg.variant] || defaultHandler)(state, msg);
     };
+    ws.onopen = function(event) {
+        ["Floor", "Sphere", "Cylinder", "Triprism", "Player"/*, "Bullet"*/].forEach(function(modelName) {
+            ws.send(JSON.stringify({variant: "RequestModel", fields: [modelName]}));
+        });
+    }
 }
 </script>
 </head>
