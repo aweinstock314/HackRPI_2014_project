@@ -53,6 +53,7 @@ function makeInitialState() {
     state.addObject = function(id, obj) {
         obj.pos = unserializeTuple(obj.pos);
         obj.ori = unserializeTuple(obj.ori);
+        obj.color = [Math.random(), Math.random(), Math.random()];
         state.world[id | 0] = obj;
     };
     return state;
@@ -119,29 +120,31 @@ function initWebGL(state) {
 
     gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "vertexPosition"));
 
-    window.setInterval(renderFrame, 1000/3, state);
+    window.setInterval(renderFrame, 1000/60, state);
+}
+
+function drawModel(state, modelName, pos, ori, col) {
+    // TODO: consider ori, add camera-adjustments
+    var gl = state.gl;
+    var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
+    var oPos = gl.getAttribLocation(state.shaderProgram, "objectPosition");
+    var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
+    if(state.models[modelName]) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
+        gl.vertexAttrib3f(vCol, col[0], col[1], col[2]);
+        gl.vertexAttrib3f(oPos, pos[0], pos[1], pos[2]);
+        gl.vertexAttribPointer(vPos, 3, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
+    }
 }
 
 function renderFrame(state) {
     var gl = state.gl;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // TODO: actual scene calculations
-    var modelName = "Sphere";
-
-    if(state.models[modelName]) {
-        var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
-        var oPos = gl.getAttribLocation(state.shaderProgram, "objectPosition");
-        var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
-        gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
-        gl.vertexAttrib3f(vCol, Math.random(), Math.random(), Math.random());
-        var x = Math.random()-0.5;
-        var y = Math.random()-0.5;
-        var z = 2*Math.random();
-        gl.vertexAttrib3f(oPos, x, y, z);
-        gl.vertexAttribPointer(vPos, 3, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
-    }
+    state.world.dictForEach(function(id, obj) {
+        drawModel(state, obj.obj_type, obj.pos, obj.ori, obj.color);
+    });
 }
 
 var state = makeInitialState();
