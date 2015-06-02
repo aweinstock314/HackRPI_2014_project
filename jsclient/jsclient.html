@@ -1,6 +1,13 @@
 <html>
 <head>
 <title>HackRPI 2014 project (TODO: naming)</title>
+<script id="shader-fragment" type="x-shader/x-fragment">
+void main(void) { gl_FragColor = vec4(1,0,0,1); }
+</script>
+<script id="shader-vertex" type="x-shader/x-vertex">
+attribute vec3 vertexPosition;
+void main(void) { gl_Position = vec4(vertexPosition, 1); }
+</script>
 <script>
 Object.prototype.dictForEach = function(f) {
     for(var key in this) {
@@ -25,15 +32,95 @@ function unserializeTuple(obj) {
 
 function makeInitialState() {
     var state = {};
+    state.canvas = null;
+    state.gl = null;
     state.playerNumber = null;
+    state.positionAttribute = null;
     state.world = {};
     state.models = {};
+    state.modelNames = ["Floor", "Sphere", "Cylinder", "Triprism", "Player"/*, "Bullet"*/];
+    state.modelBuffers = {};
     state.addObject = function(id, obj) {
         obj.pos = unserializeTuple(obj.pos);
         obj.ori = unserializeTuple(obj.ori);
         state.world[id | 0] = obj;
     };
     return state;
+}
+
+function getNodeText(node) {
+    var text = "";
+    for(var current = node.firstChild; current; current = current.nextSibling) {
+        if(current.nodeType === current.TEXT_NODE) {
+            text += current.textContent;
+        }
+    }
+    return text;
+}
+
+function getShaderById(gl, id) {
+    var node = document.getElementById(id);
+    var source = getNodeText(node);
+    var shader = function(type) {
+        if(type === "x-shader/x-fragment") { return gl.createShader(gl.FRAGMENT_SHADER); }
+        if(type === "x-shader/x-vertex") { return gl.createShader(gl.VERTEX_SHADER); }
+        return null;
+    }(node.type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        log("Failed to compile shader '" + id + "': " + gl.getShaderInfoLog(shader));
+        return null;
+    }
+    return shader;
+}
+
+// adapted from documentation at https://developer.mozilla.org/en-US/docs/Web/WebGL
+function initWebGL(state) {
+    state.canvas = document.getElementById("gl_canvas");
+    try { state.gl = state.canvas.getContext("webgl") || state.canvas.getContext("experimental-webgl"); }
+    catch(e) {}
+    if(!state.gl) {
+        log("Failed to initialize WebGL context.");
+        state.gl = null;
+        return;
+    }
+
+    var gl = state.gl;
+    gl.viewport(0, 0, state.canvas.width, state.canvas.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clearDepth(1);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+
+    shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, getShaderById(gl, "shader-fragment"));
+    gl.attachShader(shaderProgram, getShaderById(gl, "shader-vertex"));
+    gl.linkProgram(shaderProgram);
+    if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        log("Failed to link shader program.");
+        return;
+    }
+    gl.useProgram(shaderProgram);
+
+    state.positionAttribute = gl.getAttribLocation(shaderProgram, "vertexPosition");
+    gl.enableVertexAttribArray(state.positionAttribute);
+
+    window.setInterval(renderFrame, 1000/60, state);
+}
+
+function renderFrame(state) {
+    var gl = state.gl;
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // TODO: actual scene calculations
+    var modelName = "Sphere";
+
+    if(state.models[modelName]) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
+        gl.vertexAttribPointer(state.positionAttribute, 3, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
+    }
 }
 
 var state = makeInitialState();
@@ -43,7 +130,18 @@ function main() {
     window.addEventListener("beforeunload", function(event) { ws.close(); });
     var handlers = {};
     handlers["ProvideModel"] = function(state, msg) {
-        state.models[msg.fields[0]] = msg.fields[1];
+        var modelName = msg.fields[0];
+        var model = msg.fields[1];
+        state.models[modelName] = model;
+
+        if(state.gl) {
+            var gl = state.gl;
+            var buf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model), gl.DYNAMIC_DRAW);
+            state.modelBuffers[modelName] = buf;
+        }
+
     };
     handlers["SetPosition"] = function(state, msg) {
         state.world[msg.fields[0] | 0].pos = unserializeTuple(msg.fields[1]);
@@ -72,15 +170,16 @@ function main() {
         (handlers[msg.variant] || defaultHandler)(state, msg);
     };
     ws.onopen = function(event) {
-        ["Floor", "Sphere", "Cylinder", "Triprism", "Player"/*, "Bullet"*/].forEach(function(modelName) {
+        state.modelNames.forEach(function(modelName) {
             ws.send(JSON.stringify({variant: "RequestModel", fields: [modelName]}));
         });
-    }
+    };
+    initWebGL(state);
 }
 </script>
 </head>
 <body onload="main();">
-<canvas width="640" height="480"></canvas>
+<canvas id="gl_canvas" width="640" height="480"></canvas>
 <br />
 <pre id="debugging_log"></pre>
 </body>
