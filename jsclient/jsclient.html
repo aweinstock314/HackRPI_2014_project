@@ -6,7 +6,8 @@ void main(void) { gl_FragColor = vec4(1,0,0,1); }
 </script>
 <script id="shader-vertex" type="x-shader/x-vertex">
 attribute vec3 vertexPosition;
-void main(void) { gl_Position = vec4(vertexPosition, 1); }
+attribute vec3 objectPosition;
+void main(void) { gl_Position = vec4(vertexPosition + objectPosition, 1); }
 </script>
 <script>
 Object.prototype.dictForEach = function(f) {
@@ -35,7 +36,7 @@ function makeInitialState() {
     state.canvas = null;
     state.gl = null;
     state.playerNumber = null;
-    state.positionAttribute = null;
+    state.shaderProgram = null;
     state.world = {};
     state.models = {};
     state.modelNames = ["Floor", "Sphere", "Cylinder", "Triprism", "Player"/*, "Bullet"*/];
@@ -93,20 +94,25 @@ function initWebGL(state) {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    shaderProgram = gl.createProgram();
+    var shaderProgram = gl.createProgram();
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-fragment"));
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-vertex"));
+    gl.bindAttribLocation(shaderProgram, 0, "vertexPosition");
+    gl.bindAttribLocation(shaderProgram, 1, "objectPosition");
     gl.linkProgram(shaderProgram);
     if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
         log("Failed to link shader program.");
         return;
     }
     gl.useProgram(shaderProgram);
+    state.shaderProgram = shaderProgram;
 
-    state.positionAttribute = gl.getAttribLocation(shaderProgram, "vertexPosition");
-    gl.enableVertexAttribArray(state.positionAttribute);
+    log(gl.getAttribLocation(shaderProgram, "vertexPosition"));
+    log(gl.getAttribLocation(shaderProgram, "objectPosition"));
 
-    window.setInterval(renderFrame, 1000/60, state);
+    gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "vertexPosition"));
+
+    window.setInterval(renderFrame, 1000/3, state);
 }
 
 function renderFrame(state) {
@@ -117,8 +123,14 @@ function renderFrame(state) {
     var modelName = "Sphere";
 
     if(state.models[modelName]) {
+        var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
+        var oPos = gl.getAttribLocation(state.shaderProgram, "objectPosition");
         gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
-        gl.vertexAttribPointer(state.positionAttribute, 3, gl.FLOAT, false, 0, 0);
+        var x = Math.random()-0.5;
+        var y = Math.random()-0.5;
+        var z = 2*Math.random();
+        gl.vertexAttrib3f(oPos, x, y, z);
+        gl.vertexAttribPointer(vPos, 3, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
     }
 }
