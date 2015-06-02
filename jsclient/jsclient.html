@@ -2,12 +2,21 @@
 <head>
 <title>HackRPI 2014 project (TODO: naming)</title>
 <script id="shader-fragment" type="x-shader/x-fragment">
-void main(void) { gl_FragColor = vec4(1,0,0,1); }
+precision mediump float;
+varying vec3 vertexColorOut;
+void main(void) { gl_FragColor = vec4(vertexColorOut, 1.0); }
 </script>
 <script id="shader-vertex" type="x-shader/x-vertex">
 attribute vec3 vertexPosition;
 attribute vec3 objectPosition;
-void main(void) { gl_Position = vec4(vertexPosition + objectPosition, 1); }
+attribute vec3 vertexColor;
+
+varying vec3 vertexColorOut;
+
+void main(void) {
+    vertexColorOut = vertexColor;
+    gl_Position = vec4(vertexPosition + objectPosition, 1);
+}
 </script>
 <script>
 Object.prototype.dictForEach = function(f) {
@@ -99,6 +108,7 @@ function initWebGL(state) {
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-vertex"));
     gl.bindAttribLocation(shaderProgram, 0, "vertexPosition");
     gl.bindAttribLocation(shaderProgram, 1, "objectPosition");
+    gl.bindAttribLocation(shaderProgram, 2, "vertexColor");
     gl.linkProgram(shaderProgram);
     if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
         log("Failed to link shader program.");
@@ -106,9 +116,6 @@ function initWebGL(state) {
     }
     gl.useProgram(shaderProgram);
     state.shaderProgram = shaderProgram;
-
-    log(gl.getAttribLocation(shaderProgram, "vertexPosition"));
-    log(gl.getAttribLocation(shaderProgram, "objectPosition"));
 
     gl.enableVertexAttribArray(gl.getAttribLocation(shaderProgram, "vertexPosition"));
 
@@ -125,7 +132,9 @@ function renderFrame(state) {
     if(state.models[modelName]) {
         var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
         var oPos = gl.getAttribLocation(state.shaderProgram, "objectPosition");
+        var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
         gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
+        gl.vertexAttrib3f(vCol, Math.random(), Math.random(), Math.random());
         var x = Math.random()-0.5;
         var y = Math.random()-0.5;
         var z = 2*Math.random();
