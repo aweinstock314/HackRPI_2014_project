@@ -8,14 +8,29 @@ void main(void) { gl_FragColor = vec4(vertexColorOut, 1.0); }
 </script>
 <script id="shader-vertex" type="x-shader/x-vertex">
 attribute vec3 vertexPosition;
-attribute vec3 objectPosition;
 attribute vec3 vertexColor;
+attribute vec3 cameraPos;
+attribute vec2 cameraOri;
+attribute vec3 objectPos;
+attribute vec3 objectOri;
 
 varying vec3 vertexColorOut;
 
 void main(void) {
+    /*
+    print . GLSL . simplify' $ foldl1' matrixMultiply [
+        frustum (Lit (-1)) (Lit 1) (Lit (-1)) (Lit 1) (Lit 0.5) (Lit 100),
+        rotation (Var "cos(cameraOri.y)") (Var "sin(cameraOri.y)") (Lit (-1)) (Lit 0) (Lit 0),
+        rotation (Var "cos(cameraOri.x)") (Var "sin(cameraOri.x)") (Lit 0) (Lit (-1)) (Lit 0),
+        translation (Neg $ Var "cameraPos.x") (Neg $ Var "cameraPos.y") (Neg $ Var "cameraPos.z"),
+        translation (Var "objectPos.x") (Var "objectPos.y") (Neg $ Var "objectPos.z"),
+        rotation (Var "cos(objectOri.x)") (Var "sin(objectOri.x)") (Lit 0) (Lit 1) (Lit 0),
+        rotation (Var "cos(objectOri.y)") (Var "sin(objectOri.y)") (Lit 1) (Lit 0) (Lit 0)
+        ]
+    */
+    mat4 mvpMat = mat4((((0.5)*(cos(cameraOri.x)))*(cos(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*(cos(objectOri.y)))+((((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*(cos(objectOri.y)))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((sin(cameraOri.y))*(cos(objectOri.y)))+((((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*((-sin(objectOri.y))))+((((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*((-sin(objectOri.y))))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),((sin(cameraOri.y))*((-sin(objectOri.y))))+((((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((0.5)*(cos(cameraOri.x)))*(objectPos.x))+((((0.5)*(sin(cameraOri.x)))*((-objectPos.z)))+((((0.5)*(cos(cameraOri.x)))*((-cameraPos.x)))+(((0.5)*(sin(cameraOri.x)))*((-cameraPos.z))))),((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+((((0.5)*(cos(cameraOri.y)))*(objectPos.y))+(((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+((((0.5)*(cos(cameraOri.y)))*((-cameraPos.y)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z))))))),((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*(objectPos.y))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*((-cameraPos.y)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z)))+(-1.0050251256281406)))))),((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+(((sin(cameraOri.y))*(objectPos.y))+(((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+(((sin(cameraOri.y))*((-cameraPos.y)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z))))))));
     vertexColorOut = vertexColor;
-    gl_Position = vec4(vertexPosition + objectPosition, 1);
+    gl_Position = mvpMat * vec4(vertexPosition, 1);
 }
 </script>
 <script>
@@ -108,8 +123,11 @@ function initWebGL(state) {
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-fragment"));
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-vertex"));
     gl.bindAttribLocation(shaderProgram, 0, "vertexPosition");
-    gl.bindAttribLocation(shaderProgram, 1, "objectPosition");
-    gl.bindAttribLocation(shaderProgram, 2, "vertexColor");
+    gl.bindAttribLocation(shaderProgram, 1, "vertexColor");
+    gl.bindAttribLocation(shaderProgram, 2, "cameraPos");
+    gl.bindAttribLocation(shaderProgram, 3, "cameraOri");
+    gl.bindAttribLocation(shaderProgram, 4, "objectPos");
+    gl.bindAttribLocation(shaderProgram, 5, "objectOri");
     gl.linkProgram(shaderProgram);
     if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
         log("Failed to link shader program.");
@@ -124,16 +142,22 @@ function initWebGL(state) {
 }
 
 function drawModel(state, modelName, pos, ori, col) {
-    // TODO: consider ori, add camera-adjustments
     var gl = state.gl;
     var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
-    var oPos = gl.getAttribLocation(state.shaderProgram, "objectPosition");
     var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
+    var cPos = gl.getAttribLocation(state.shaderProgram, "cameraPos");
+    var cOri = gl.getAttribLocation(state.shaderProgram, "cameraOri");
+    var oPos = gl.getAttribLocation(state.shaderProgram, "objectPos");
+    var oOri = gl.getAttribLocation(state.shaderProgram, "objectOri");
     if(state.models[modelName]) {
         gl.bindBuffer(gl.ARRAY_BUFFER, state.modelBuffers[modelName]);
-        gl.vertexAttrib3f(vCol, col[0], col[1], col[2]);
-        gl.vertexAttrib3f(oPos, pos[0], pos[1], pos[2]);
         gl.vertexAttribPointer(vPos, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttrib3f(oPos, pos[0], pos[1], pos[2]);
+        gl.vertexAttrib3f(oOri, ori[0], ori[1], ori[2]);
+        gl.vertexAttrib3f(vCol, col[0], col[1], col[2]);
+        // TODO: non-hardcoded camera pos & ori
+        gl.vertexAttrib3f(cPos, 1, 1, 1);
+        gl.vertexAttrib2f(cOri, 0, 0.4);
         gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
     }
 }
