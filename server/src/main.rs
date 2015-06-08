@@ -332,11 +332,14 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
         PlayerCommand::RotateCamera(Orientation(theta, phi)) => {
             println!("Player #{:?} rotates by ({:?}, {:?})", playerid, theta, phi);
             let player = &mut get_player(world, playerid, sender.clone());
-            player.ori = player.ori + Orientation(theta, phi);
-            println!("P#{:?} ori: {:?}", playerid, player.ori);
-            sender.send(ServerControlMsg::BroadcastCommand(
-                ServerCommand::SetOrientation(playerid, player.ori)
-            )).unwrap();
+            let newori = player.ori + Orientation(theta, phi);
+            if (-TAU/4.0 < newori.1) && (newori.1 < TAU/4.0) {
+                player.ori = newori;
+                println!("P#{:?} ori: {:?}", playerid, player.ori);
+                sender.send(ServerControlMsg::BroadcastCommand(
+                    ServerCommand::SetOrientation(playerid, player.ori)
+                )).unwrap();
+            }
         }
         PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); },
         PlayerCommand::RequestModel(ty) => sender.send(ServerControlMsg::IndividualCommand(playerid,
