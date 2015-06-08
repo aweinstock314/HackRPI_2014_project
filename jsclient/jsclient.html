@@ -21,14 +21,14 @@ void main(void) {
     print . GLSL . simplify' $ foldl1' matrixMultiply [
         frustum (Lit (-1)) (Lit 1) (Lit (-1)) (Lit 1) (Lit 0.5) (Lit 100),
         rotation (Var "cos(cameraOri.y)") (Var "sin(cameraOri.y)") (Lit (-1)) (Lit 0) (Lit 0),
-        rotation (Var "cos(cameraOri.x)") (Var "sin(cameraOri.x)") (Lit 0) (Lit (-1)) (Lit 0),
-        translation (Neg $ Var "cameraPos.x") (Neg $ Var "cameraPos.y") (Neg $ Var "cameraPos.z"),
+        rotation (Var "cos(cameraOri.x)") (Var "sin(cameraOri.x)") (Lit 0) (Lit 1) (Lit 0),
+        translation (Neg $ Var "cameraPos.x") (Neg $ Var "cameraPos.y") (Var "cameraPos.z"),
         translation (Var "objectPos.x") (Var "objectPos.y") (Neg $ Var "objectPos.z"),
         rotation (Var "cos(objectOri.x)") (Var "sin(objectOri.x)") (Lit 0) (Lit 1) (Lit 0),
         rotation (Var "cos(objectOri.y)") (Var "sin(objectOri.y)") (Lit 1) (Lit 0) (Lit 0)
         ]
     */
-    mat4 mvpMat = mat4((((0.5)*(cos(cameraOri.x)))*(cos(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*(cos(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*(cos(objectOri.y)))+((((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*(cos(objectOri.y)))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((sin(cameraOri.y))*(cos(objectOri.y)))+((((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*((-sin(objectOri.y))))+((((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*((-sin(objectOri.y))))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),((sin(cameraOri.y))*((-sin(objectOri.y))))+((((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((0.5)*(cos(cameraOri.x)))*(objectPos.x))+((((0.5)*(sin(cameraOri.x)))*((-objectPos.z)))+((((0.5)*(cos(cameraOri.x)))*((-cameraPos.x)))+(((0.5)*(sin(cameraOri.x)))*((-cameraPos.z))))),((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+((((0.5)*(cos(cameraOri.y)))*(objectPos.y))+(((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((0.5)*(sin(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+((((0.5)*(cos(cameraOri.y)))*((-cameraPos.y)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z))))))),((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*(objectPos.y))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*((-cameraPos.y)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z)))+(-1.0050251256281406)))))),((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*(objectPos.x))+(((sin(cameraOri.y))*(objectPos.y))+(((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-cos(cameraOri.y)))*(sin(cameraOri.x)))*((-cameraPos.x)))+(((sin(cameraOri.y))*((-cameraPos.y)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-cameraPos.z))))))));
+    mat4 mvpMat = mat4((((0.5)*(cos(cameraOri.x)))*(cos(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-sin(objectOri.x)))),((((0.5)*(cos(cameraOri.x)))*(sin(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*(cos(objectOri.y)))+((((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*(cos(objectOri.y)))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((sin(cameraOri.y))*(cos(objectOri.y)))+((((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((((0.5)*(cos(cameraOri.x)))*(sin(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*((-sin(objectOri.y))))+((((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*((-sin(objectOri.y))))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),((sin(cameraOri.y))*((-sin(objectOri.y))))+((((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(sin(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((0.5)*(cos(cameraOri.x)))*(objectPos.x))+((((0.5)*(sin(cameraOri.x)))*((-objectPos.z)))+((((0.5)*(cos(cameraOri.x)))*((-cameraPos.x)))+(((0.5)*(sin(cameraOri.x)))*(cameraPos.z)))),((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+((((0.5)*(cos(cameraOri.y)))*(objectPos.y))+(((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+((((0.5)*(cos(cameraOri.y)))*((-cameraPos.y)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z)))))),((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*(objectPos.y))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*((-cameraPos.y)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z))+(-1.0050251256281406)))))),((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+(((sin(cameraOri.y))*(objectPos.y))+(((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+(((sin(cameraOri.y))*((-cameraPos.y)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z)))))));
     vertexColorOut = vertexColor;
     gl_Position = mvpMat * vec4(vertexPosition, 1);
 }
@@ -145,8 +145,6 @@ function drawModel(state, modelName, pos, ori, col) {
     var gl = state.gl;
     var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
     var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
-    var cPos = gl.getAttribLocation(state.shaderProgram, "cameraPos");
-    var cOri = gl.getAttribLocation(state.shaderProgram, "cameraOri");
     var oPos = gl.getAttribLocation(state.shaderProgram, "objectPos");
     var oOri = gl.getAttribLocation(state.shaderProgram, "objectOri");
     if(state.models[modelName]) {
@@ -155,9 +153,6 @@ function drawModel(state, modelName, pos, ori, col) {
         gl.vertexAttrib3f(oPos, pos[0], pos[1], pos[2]);
         gl.vertexAttrib3f(oOri, ori[0], ori[1], ori[2]);
         gl.vertexAttrib3f(vCol, col[0], col[1], col[2]);
-        // TODO: non-hardcoded camera pos & ori
-        gl.vertexAttrib3f(cPos, 1, 1, 1);
-        gl.vertexAttrib2f(cOri, 0, 0.4);
         gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
     }
 }
@@ -166,9 +161,28 @@ function renderFrame(state) {
     var gl = state.gl;
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    state.world.dictForEach(function(id, obj) {
-        drawModel(state, obj.obj_type, obj.pos, obj.ori, obj.color);
-    });
+    var player = state.world[state.playerNumber];
+    if(player) {
+        var cPos = gl.getAttribLocation(state.shaderProgram, "cameraPos");
+        var cOri = gl.getAttribLocation(state.shaderProgram, "cameraOri");
+        gl.vertexAttrib3f(cPos, player.pos[0], player.pos[1], player.pos[2]);
+        gl.vertexAttrib2f(cOri, player.ori[0], player.ori[1]);
+
+        state.world.dictForEach(function(id, obj) {
+            if(id != state.playerNumber) {
+                drawModel(state, obj.obj_type, obj.pos, obj.ori, obj.color);
+            }
+        });
+    }
+}
+
+// add listeners on `obj` that maintain a set of currently held
+//  key[code]s, and call `f` on that set every `delay` milliseconds
+function makeKeyRepeater(obj, delay, f) {
+    var currentlyHeldKeys = {}; // :: KeyCode -> Bool
+    obj.addEventListener("keydown", function(e) { currentlyHeldKeys[e.keyCode] = true; });
+    obj.addEventListener("keyup", function(e) { currentlyHeldKeys[e.keyCode] = false; });
+    window.setInterval(function() { f(currentlyHeldKeys); }, delay);
 }
 
 var state = makeInitialState();
@@ -223,6 +237,28 @@ function main() {
         });
     };
     initWebGL(state);
+    makeKeyRepeater(window, 10, function(currentlyHeldKeys) {
+        function keyHeld(name) { return !!currentlyHeldKeys[name.charCodeAt(0)]; }
+        function send(variant, fields) {
+            if(ws.readyState == ws.OPEN) {
+                ws.send(JSON.stringify({variant: variant, fields: fields}));
+            }
+        }
+        function sendRotate(theta, phi) { send("RotateCamera", [{_field0: theta, _field1: phi}]); }
+        var MOVE_DELTA = 0.05;
+        var ROTATE_DELTA = 0.05;
+        if(keyHeld("W")) { send("MoveForward", [MOVE_DELTA]); }
+        if(keyHeld("S")) { send("MoveForward", [-MOVE_DELTA]); }
+        if(keyHeld("A")) { send("MoveSideways", [-MOVE_DELTA]); }
+        if(keyHeld("D")) { send("MoveSideways", [MOVE_DELTA]); }
+        if(keyHeld("Q")) { send("MoveUp", [-MOVE_DELTA]); }
+        if(keyHeld("E")) { send("MoveUp", [MOVE_DELTA]); }
+
+        if(keyHeld("I")) { sendRotate(0, ROTATE_DELTA); }
+        if(keyHeld("K")) { sendRotate(0, -ROTATE_DELTA); }
+        if(keyHeld("J")) { sendRotate(-ROTATE_DELTA, 0); }
+        if(keyHeld("L")) { sendRotate(ROTATE_DELTA, 0); }
+    });
 }
 </script>
 </head>
