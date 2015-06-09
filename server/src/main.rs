@@ -457,7 +457,9 @@ fn main() {
         match servctl {
             ServerControlMsg::StartConnection(mut reader, mut writer) => {
                 playernum += 1;
-                send_initialization_to_client(&mut writer, playernum, &world).unwrap();
+                if let Err(e) = send_initialization_to_client(&mut writer, playernum, &world) {
+                    println!("Failed to send initialization to client #{}: {:?}", playernum, e);
+                }
                 connections.insert(playernum, writer);
                 // create & broadcast creation of player object
                 drop(get_player(&mut world, playernum, transmit_servctl.clone()));
