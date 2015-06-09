@@ -2,19 +2,31 @@
 <head>
 <title>HackRPI 2014 project (TODO: naming)</title>
 <script id="shader-fragment" type="x-shader/x-fragment">
-precision mediump float;
+precision highp float;
 varying vec3 vertexColorOut;
-void main(void) { gl_FragColor = vec4(vertexColorOut, 1.0); }
+varying vec3 vertexColorOut2;
+varying vec3 positionOut;
+const float pi = 3.14159;
+
+void main(void) {
+    vec3 normPos = normalize(positionOut);
+    float intensity = clamp(normPos.y, 0.5, 1.0);
+    float alpha = sin(normPos.z);
+    gl_FragColor = vec4(intensity * mix(vertexColorOut, vertexColorOut2, alpha), 1.0);
+}
 </script>
 <script id="shader-vertex" type="x-shader/x-vertex">
 attribute vec3 vertexPosition;
 attribute vec3 vertexColor;
+attribute vec3 vertexColor2;
 uniform vec3 cameraPos;
 uniform vec2 cameraOri;
 uniform vec3 objectPos;
 uniform vec3 objectOri;
 
 varying vec3 vertexColorOut;
+varying vec3 vertexColorOut2;
+varying vec3 positionOut;
 
 void main(void) {
     /*
@@ -30,6 +42,8 @@ void main(void) {
     */
     mat4 mvpMat = mat4((((0.5)*(cos(cameraOri.x)))*(cos(objectOri.x)))+(((0.5)*(sin(cameraOri.x)))*(sin(objectOri.x))),((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(sin(objectOri.x))),((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(sin(objectOri.x))),((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(cos(objectOri.x)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(sin(objectOri.x))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*(cos(objectOri.y)))+((((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*(cos(objectOri.y)))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((sin(cameraOri.y))*(cos(objectOri.y)))+((((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(sin(objectOri.y))),((((0.5)*(cos(cameraOri.x)))*((-sin(objectOri.x))))+(((0.5)*(sin(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y)),(((0.5)*(cos(cameraOri.y)))*((-sin(objectOri.y))))+((((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((-1.0100502512562815)*((-sin(cameraOri.y))))*((-sin(objectOri.y))))+((((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),((sin(cameraOri.y))*((-sin(objectOri.y))))+((((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-sin(objectOri.x))))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cos(objectOri.x))))*(cos(objectOri.y))),(((0.5)*(cos(cameraOri.x)))*(objectPos.x))+((((0.5)*(sin(cameraOri.x)))*((-objectPos.z)))+((((0.5)*(cos(cameraOri.x)))*((-cameraPos.x)))+(((0.5)*(sin(cameraOri.x)))*(cameraPos.z)))),((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+((((0.5)*(cos(cameraOri.y)))*(objectPos.y))+(((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((0.5)*(sin(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+((((0.5)*(cos(cameraOri.y)))*((-cameraPos.y)))+((((0.5)*(sin(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z)))))),((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*(objectPos.y))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+((((-1.0100502512562815)*((-sin(cameraOri.y))))*((-cameraPos.y)))+(((((-1.0100502512562815)*(cos(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z))+(-1.0050251256281406)))))),((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*(objectPos.x))+(((sin(cameraOri.y))*(objectPos.y))+(((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*((-objectPos.z)))+(((((-cos(cameraOri.y)))*((-sin(cameraOri.x))))*((-cameraPos.x)))+(((sin(cameraOri.y))*((-cameraPos.y)))+((((-cos(cameraOri.y)))*(cos(cameraOri.x)))*(cameraPos.z)))))));
     vertexColorOut = vertexColor;
+    vertexColorOut2 = vertexColor2;
+    positionOut = vertexPosition;
     gl_Position = mvpMat * vec4(vertexPosition, 1);
 }
 </script>
@@ -59,6 +73,7 @@ function makeInitialState() {
     var state = {};
     state.canvas = null;
     state.gl = null;
+    state.redraw = false;
     state.playerNumber = null;
     state.shaderProgram = null;
     state.world = {};
@@ -69,6 +84,7 @@ function makeInitialState() {
         obj.pos = unserializeTuple(obj.pos);
         obj.ori = unserializeTuple(obj.ori);
         obj.color = [Math.random(), Math.random(), Math.random()];
+        obj.color2 = [Math.random(), Math.random(), Math.random()];
         state.world[id | 0] = obj;
     };
     return state;
@@ -124,6 +140,7 @@ function initWebGL(state) {
     gl.attachShader(shaderProgram, getShaderById(gl, "shader-vertex"));
     gl.bindAttribLocation(shaderProgram, 0, "vertexPosition");
     gl.bindAttribLocation(shaderProgram, 1, "vertexColor");
+    gl.bindAttribLocation(shaderProgram, 2, "vertexColor2");
     gl.linkProgram(shaderProgram);
     if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
         log("Failed to link shader program.");
@@ -137,10 +154,11 @@ function initWebGL(state) {
     window.setInterval(renderFrame, 1000/60, state);
 }
 
-function drawModel(state, modelName, pos, ori, col) {
+function drawModel(state, modelName, pos, ori, col, col2) {
     var gl = state.gl;
     var vPos = gl.getAttribLocation(state.shaderProgram, "vertexPosition");
     var vCol = gl.getAttribLocation(state.shaderProgram, "vertexColor");
+    var vCol2 = gl.getAttribLocation(state.shaderProgram, "vertexColor2");
     var oPos = gl.getUniformLocation(state.shaderProgram, "objectPos");
     var oOri = gl.getUniformLocation(state.shaderProgram, "objectOri");
     if(state.models[modelName]) {
@@ -149,26 +167,30 @@ function drawModel(state, modelName, pos, ori, col) {
         gl.uniform3f(oPos, pos[0], pos[1], pos[2]);
         gl.uniform3f(oOri, ori[0], ori[1], ori[2]);
         gl.vertexAttrib3f(vCol, col[0], col[1], col[2]);
+        gl.vertexAttrib3f(vCol2, col2[0], col2[1], col2[2]);
         gl.drawArrays(gl.TRIANGLES, 0, state.models[modelName].length/3);
     }
 }
 
 function renderFrame(state) {
-    var gl = state.gl;
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if(state.redraw) {
+        var gl = state.gl;
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    var player = state.world[state.playerNumber];
-    if(player) {
-        var cPos = gl.getUniformLocation(state.shaderProgram, "cameraPos");
-        var cOri = gl.getUniformLocation(state.shaderProgram, "cameraOri");
-        gl.uniform3f(cPos, player.pos[0], player.pos[1], player.pos[2]);
-        gl.uniform2f(cOri, player.ori[0], player.ori[1]);
+        var player = state.world[state.playerNumber];
+        if(player) {
+            var cPos = gl.getUniformLocation(state.shaderProgram, "cameraPos");
+            var cOri = gl.getUniformLocation(state.shaderProgram, "cameraOri");
+            gl.uniform3f(cPos, player.pos[0], player.pos[1], player.pos[2]);
+            gl.uniform2f(cOri, player.ori[0], player.ori[1]);
 
-        state.world.dictForEach(function(id, obj) {
-            if(id != state.playerNumber) {
-                drawModel(state, obj.obj_type, obj.pos, obj.ori, obj.color);
-            }
-        });
+            state.world.dictForEach(function(id, obj) {
+                if(id != state.playerNumber) {
+                    drawModel(state, obj.obj_type, obj.pos, obj.ori, obj.color, obj.color2);
+                }
+            });
+        }
+        state.redraw = false;
     }
 }
 
@@ -200,24 +222,30 @@ function main() {
             state.modelBuffers[modelName] = buf;
         }
 
+        state.redraw = true;
     };
     handlers["SetPosition"] = function(state, msg) {
         state.world[msg.fields[0] | 0].pos = unserializeTuple(msg.fields[1]);
+        state.redraw = true;
     };
     handlers["SetOrientation"] = function(state, msg) {
         state.world[msg.fields[0] | 0].ori = unserializeTuple(msg.fields[1]);
+        state.redraw = true;
     };
     handlers["AddObject"] = function(state, msg) {
         state.addObject(msg.fields[0], msg.fields[1]);
+        state.redraw = true;
     };
     handlers["RemoveObject"] = function(state, msg) {
         delete state.world[msg.fields[0] | 0];
+        state.redraw = true;
     };
     handlers["SetPlayerNumber"] = function(state, msg) {
         state.playerNumber = msg.fields[0] | 0;
     };
     handlers["InitializeWorld"] = function(state, msg) {
         msg.fields[0].dictForEach(state.addObject);
+        state.redraw = true;
     };
     function defaultHandler(state, msg) {
         log("Unknown command: " + msg.variant);

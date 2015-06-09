@@ -81,7 +81,7 @@ fn main() {
     let unit_cylinder = make_cylinder(25, 1.0, 1.0);
     let unit_triprism = make_cylinder(3, 0.5, 1.0);
     let player_model = make_player_model();
-    let floor_model = make_cylinder(4, 1e9, 0.1);
+    let floor_model = make_cylinder(4, 1e6, 0.1);
     write_model("unit_sphere.json", &unit_sphere);
     write_model("unit_cylinder.json", &unit_cylinder);
     write_model("unit_triprism.json", &unit_triprism);
