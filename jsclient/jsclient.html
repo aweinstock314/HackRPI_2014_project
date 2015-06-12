@@ -206,6 +206,7 @@ function makeKeyRepeater(obj, delay, f) {
 var state = makeInitialState();
 
 function main() {
+    initWebGL(state);
     var ws = new WebSocket("ws://localhost:51702");
     window.addEventListener("beforeunload", function(event) { ws.close(); });
     var handlers = {};
@@ -268,7 +269,6 @@ function main() {
             }
         });
     };
-    initWebGL(state);
     makeKeyRepeater(window, 10, function(currentlyHeldKeys) {
         function keyHeld(name) { return !!currentlyHeldKeys[name.charCodeAt(0)]; }
         function send(variant, fields) {
