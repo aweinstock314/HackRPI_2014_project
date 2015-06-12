@@ -212,6 +212,9 @@ function main() {
     handlers["ProvideModel"] = function(state, msg) {
         var modelName = msg.fields[0];
         var model = msg.fields[1];
+        if(!window.localStorage.getItem('model_' + modelName)) {
+            window.localStorage.setItem('model_' + modelName, JSON.stringify(model));
+        }
         state.models[modelName] = model;
 
         if(state.gl) {
@@ -257,7 +260,12 @@ function main() {
     };
     ws.onopen = function(event) {
         state.modelNames.forEach(function(modelName) {
-            ws.send(JSON.stringify({variant: "RequestModel", fields: [modelName]}));
+            var model = window.localStorage.getItem('model_' + modelName);
+            if(model) {
+                handlers["ProvideModel"](state, {fields: [modelName, JSON.parse(model)]});
+            } else {
+                ws.send(JSON.stringify({variant: "RequestModel", fields: [modelName]}));
+            }
         });
     };
     initWebGL(state);
