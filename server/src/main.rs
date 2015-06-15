@@ -50,9 +50,10 @@ impl Add for Orientation {
     }
 }
 
-#[derive(RustcEncodable, RustcDecodable, Clone, Copy)]
+#[derive(RustcEncodable, RustcDecodable, Clone)]
 pub enum PlayerCommand {
     RequestModel(ObjectType), // TODO: some kind of DoS mitigation?
+    Ping(Vec<u8>),
     MoveForward(dReal),
     MoveSideways(dReal),
     MoveUp(dReal), //possibly replace with "Jump" when transitioning to non-free-movement?
@@ -81,6 +82,7 @@ pub enum ServerCommand {
 
 pub enum ServerControlMsg {
     StartConnection(Box<GameClientReader+Send>, Box<GameClientWriter+Send>),
+    SendPong(i64, Vec<u8>),
     IndividualCommand(i64, ServerCommand),
     BroadcastCommand(ServerCommand),
     ProcessPlayerAction(i64, PlayerCommand),
@@ -132,7 +134,8 @@ fn show_examples(mut stream: TcpStream, playernum: i64) {
     for cmd in example_servercommands().iter() {
         writeln!(stream, "{}", &json::encode(&OutgoingMessage{command: cmd.clone(), timestamp: seconds}).unwrap()).unwrap();
     }
-    for &cmd in example_playercommands().iter() {
+    let mut playercommands = example_playercommands();
+    for cmd in playercommands.drain(..) {
         writeln!(stream, "{}", &json::encode(&IncomingMessage{command: cmd, timestamp: seconds}).unwrap()).unwrap();
     }
 }
@@ -143,6 +146,7 @@ pub trait GameClientReader {
 
 pub trait GameClientWriter {
     fn send_message(&mut self, &ServerCommand) -> Result<(), Box<Error>>;
+    fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>>;
 }
 
 impl GameClientReader for Box<GameClientReader+Send> {
@@ -153,6 +157,9 @@ impl GameClientReader for Box<GameClientReader+Send> {
 impl GameClientWriter for Box<GameClientWriter+Send> {
     fn send_message(&mut self, command: &ServerCommand) -> Result<(), Box<Error>> {
         (**self).send_message(command)
+    }
+    fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>> {
+        (**self).send_pong(data)
     }
 }
 
@@ -185,6 +192,7 @@ impl GameClientWriter for TcpStream {
             .map_err(|e| Box::new(e) as Box<Error>)
             .map(|_| ())
     }
+    fn send_pong(&mut self, _data: Vec<u8>) -> Result<(), Box<Error>> { Ok(()) } // deliberate NOP
 }
 
 impl GameClientReader for websocket::server::receiver::Receiver<websocket::stream::WebSocketStream> {
@@ -209,6 +217,7 @@ impl GameClientReader for websocket::server::receiver::Receiver<websocket::strea
                     Ok(s) => try_decode(self, s),
                     Err(e) => Some(Err(Box::new(e)))
                 },
+                Ok(websocket::message::Message::Ping(data)) => Some(Ok(PlayerCommand::Ping(data))),
                 Ok(_) => None
             }
         }
@@ -218,6 +227,11 @@ impl GameClientWriter for websocket::server::sender::Sender<websocket::stream::W
     fn send_message(&mut self, message: &ServerCommand) -> Result<(), Box<Error>> {
         websocket::ws::sender::Sender::send_message(self,
             websocket::Message::Text(json::encode(message).unwrap())
+        ).map_err(|e| Box::new(e) as Box<Error>)
+    }
+    fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>> {
+        websocket::ws::sender::Sender::send_message(self,
+            websocket::Message::Pong(data)
         ).map_err(|e| Box::new(e) as Box<Error>)
     }
 }
@@ -287,14 +301,15 @@ fn apply_polar_movement(pos: Position, magnitude: dReal, theta: dReal) -> Positi
     Position(x + magnitude*theta.cos(), y, z + magnitude*theta.sin())
 }
 
-fn get_cost_of_action(action: PlayerCommand) -> dReal {
+fn get_cost_of_action(action: &PlayerCommand) -> dReal {
     match action {
-        PlayerCommand::RequestModel(_) => 0.0,
-        PlayerCommand::MoveForward(x) => x.abs(),
-        PlayerCommand::MoveSideways(x) => x.abs(),
-        PlayerCommand::MoveUp(x) => x.abs(),
-        PlayerCommand::RotateCamera(_) => 0.0,
-        PlayerCommand::Shoot => 0.0,
+        &PlayerCommand::RequestModel(_) => 0.0,
+        &PlayerCommand::Ping(_) => 0.0,
+        &PlayerCommand::MoveForward(x) => x.abs(),
+        &PlayerCommand::MoveSideways(x) => x.abs(),
+        &PlayerCommand::MoveUp(x) => x.abs(),
+        &PlayerCommand::RotateCamera(_) => 0.0,
+        &PlayerCommand::Shoot => 0.0,
     }
 }
 
@@ -344,6 +359,7 @@ fn process_player_action(world: &mut HashMap<i64, GameObject>,
         PlayerCommand::Shoot => { println!("Player #{:?} shoots", playerid); },
         PlayerCommand::RequestModel(ty) => sender.send(ServerControlMsg::IndividualCommand(playerid,
             ServerCommand::ProvideModel(ty, get_mesh(ty)))).unwrap(),
+        PlayerCommand::Ping(data) => sender.send(ServerControlMsg::SendPong(playerid, data)).unwrap()
     }
 }
 
@@ -468,6 +484,11 @@ fn main() {
                     spawn(move || { process_input_from_client(&mut reader, playernum, tx); });
                 }
             },
+            ServerControlMsg::SendPong(playernum, data) => {
+                if let Some(Err(e)) = connections.get_mut(&playernum) .map(|w| w.send_pong(data)) {
+                    println!("Failed to send pong to client #{}: ({:?}).", playernum, e);
+                }
+            },
             ServerControlMsg::IndividualCommand(playernum, action) => {
                 if let Some(Err(e)) = connections.get_mut(&playernum)
                     .map(|w| send_action_to_client(w, playernum, &action)) {
@@ -514,7 +535,7 @@ fn main() {
                 let movement_budget: dReal = 1.0;
                 let mut budgets_spent = HashMap::<i64, dReal>::new();
                 for (pid, action) in action_buffer.drain(..) {
-                    let cur_cost = get_cost_of_action(action);
+                    let cur_cost = get_cost_of_action(&action);
                     match budgets_spent.entry(pid) {
                         Occupied(mut spent) => {
                             if spent.get() + cur_cost <= movement_budget {
