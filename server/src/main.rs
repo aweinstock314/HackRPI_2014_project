@@ -80,8 +80,19 @@ pub enum ServerCommand {
     InitializeWorld(HashMap<i64, GameObject>),
 }
 
+// Monomorphisation to avoid extra indirection
+pub enum ClientReaderBox {
+    TCP(io::Lines<BufReader<TcpStream>>),
+    WS(websocket::server::receiver::Receiver<websocket::stream::WebSocketStream>),
+}
+
+pub enum ClientWriterBox {
+    TCP(TcpStream),
+    WS(websocket::server::sender::Sender<websocket::stream::WebSocketStream>),
+}
+
 pub enum ServerControlMsg {
-    StartConnection(Box<GameClientReader+Send>, Box<GameClientWriter+Send>),
+    StartConnection(ClientReaderBox, ClientWriterBox),
     SendPong(i64, Vec<u8>),
     IndividualCommand(i64, ServerCommand),
     BroadcastCommand(ServerCommand),
@@ -160,6 +171,29 @@ impl GameClientWriter for Box<GameClientWriter+Send> {
     }
     fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>> {
         (**self).send_pong(data)
+    }
+}
+
+impl GameClientReader for ClientReaderBox {
+    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
+        match self {
+            &mut ClientReaderBox::TCP(ref mut reader) => reader.receive_message(),
+            &mut ClientReaderBox::WS(ref mut reader) => reader.receive_message(),
+        }
+    }
+}
+impl GameClientWriter for ClientWriterBox {
+    fn send_message(&mut self, command: &ServerCommand) -> Result<(), Box<Error>> {
+        match self {
+            &mut ClientWriterBox::TCP(ref mut writer) => writer.send_message(command),
+            &mut ClientWriterBox::WS(ref mut writer) => writer.send_message(command),
+        }
+    }
+    fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>> {
+        match self {
+            &mut ClientWriterBox::TCP(ref mut writer) => writer.send_pong(data),
+            &mut ClientWriterBox::WS(ref mut writer) => writer.send_pong(data),
+        }
     }
 }
 
@@ -382,7 +416,8 @@ fn listener_loop_tcp(sender: Sender<ServerControlMsg>) {
             Ok(stream) => {
                 println!("Accepted a TCP connection from {:?}.", stream.peer_addr());
                 let reader = BufReader::new(stream.try_clone().unwrap()).lines();
-                sender.send(ServerControlMsg::StartConnection(Box::new(reader), Box::new(stream))).unwrap();
+                sender.send(ServerControlMsg::StartConnection(ClientReaderBox::TCP(reader),
+                                                              ClientWriterBox::TCP(stream))).unwrap();
             },
         }
     }
@@ -397,7 +432,8 @@ fn listener_loop_ws(sender: Sender<ServerControlMsg>) {
                 Err(e) => println!("Error accepting incoming WS connection: {:?}", e),
                 Ok((writer, mut reader)) => {
                     println!("Accepted a WS connection from {:?}.", reader.get_mut().peer_addr());
-                    sender.send(ServerControlMsg::StartConnection(Box::new(reader), Box::new(writer))).unwrap();
+                    sender.send(ServerControlMsg::StartConnection(ClientReaderBox::WS(reader),
+                                                                  ClientWriterBox::WS(writer))).unwrap();
                 }
             }
         }
@@ -460,7 +496,7 @@ fn main() {
     { let tx = transmit_servctl.clone(); spawn(move || { listener_loop_ws(tx); }); }
     { let tx = transmit_servctl.clone(); spawn(move || { timer_loop(tx); }); }
 
-    let mut connections = HashMap::<i64, Box<GameClientWriter+Send>>::new();
+    let mut connections = HashMap::<i64, ClientWriterBox>::new();
 
     let mut action_buffer = Vec::new();
 
