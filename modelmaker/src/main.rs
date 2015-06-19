@@ -82,9 +82,11 @@ fn main() {
     let unit_triprism = make_cylinder(3, 0.5, 1.0);
     let player_model = make_player_model();
     let floor_model = make_cylinder(4, 1e6, 0.1);
+    let bullet_model = make_sphereoid(50, 50, 0.1);
     write_model("unit_sphere.json", &unit_sphere);
     write_model("unit_cylinder.json", &unit_cylinder);
     write_model("unit_triprism.json", &unit_triprism);
     write_model("player_model.json", &player_model);
     write_model("floor_model.json", &floor_model);
+    write_model("bullet_model.json", &bullet_model);
 }

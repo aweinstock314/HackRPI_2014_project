@@ -78,7 +78,7 @@ function makeInitialState() {
     state.shaderProgram = null;
     state.world = {};
     state.models = {};
-    state.modelNames = ["Floor", "Sphere", "Cylinder", "Triprism", "Player"/*, "Bullet"*/];
+    state.modelNames = ["Floor", "Sphere", "Cylinder", "Triprism", "Player", "Bullet"];
     state.modelBuffers = {};
     state.addObject = function(id, obj) {
         obj.pos = unserializeTuple(obj.pos);

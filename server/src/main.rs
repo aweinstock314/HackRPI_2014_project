@@ -301,12 +301,12 @@ fn send_action_to_client<C: GameClientWriter>(client: &mut C, playernum: i64, ac
 // TODO: consider using lazy_static! instead
 fn get_mesh(ty: ObjectType) -> Vec<dReal> {
     match ty {
-        ObjectType::Floor => json::decode(include_str!("../../modelmaker/floor_model.json")).unwrap(),
-        ObjectType::Sphere => json::decode(include_str!("../../modelmaker/unit_sphere.json")).unwrap(),
-        ObjectType::Cylinder => json::decode(include_str!("../../modelmaker/unit_cylinder.json")).unwrap(),
-        ObjectType::Triprism => json::decode(include_str!("../../modelmaker/unit_triprism.json")).unwrap(),
-        ObjectType::Player => json::decode(include_str!("../../modelmaker/player_model.json")).unwrap(),
-        ObjectType::Bullet => unimplemented!(),
+        ObjectType::Floor => json::decode(include_str!("../floor_model.json")).unwrap(),
+        ObjectType::Sphere => json::decode(include_str!("../unit_sphere.json")).unwrap(),
+        ObjectType::Cylinder => json::decode(include_str!("../unit_cylinder.json")).unwrap(),
+        ObjectType::Triprism => json::decode(include_str!("../unit_triprism.json")).unwrap(),
+        ObjectType::Player => json::decode(include_str!("../player_model.json")).unwrap(),
+        ObjectType::Bullet => json::decode(include_str!("../bullet_model.json")).unwrap(),
     }
 }
 
@@ -472,6 +472,11 @@ fn place_initial_obstacles(world: &mut HashMap<i64, GameObject>) {
         pos: Position(5.0, 10.0, 0.0),
         ori: Orientation(0.0, 0.0),
         obj_type: ObjectType::Triprism,
+    });
+    world.insert(-5, GameObject {
+        pos: Position(0.0, 5.0, 5.0),
+        ori: Orientation(0.0, 0.0),
+        obj_type: ObjectType::Bullet,
     });
 }
 

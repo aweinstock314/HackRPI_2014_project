@@ -15,9 +15,10 @@ public class ModelCache {
         try {
             populate("Floor", "floor_model.json");
             populate("Player", "player_model.json");
-            populate("Sphere","unit_sphere.json");
-            populate("Cylinder","unit_cylinder.json");
-            populate("Triprism","unit_triprism.json");
+            populate("Sphere", "unit_sphere.json");
+            populate("Cylinder", "unit_cylinder.json");
+            populate("Triprism", "unit_triprism.json");
+            populate("Bullet", "bullet_model.json");
         }
         catch(Exception e) { e.printStackTrace(); }
     }
