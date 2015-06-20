@@ -160,20 +160,6 @@ pub trait GameClientWriter {
     fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>>;
 }
 
-impl GameClientReader for Box<GameClientReader+Send> {
-    fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
-        (**self).receive_message()
-    }
-}
-impl GameClientWriter for Box<GameClientWriter+Send> {
-    fn send_message(&mut self, command: &ServerCommand) -> Result<(), Box<Error>> {
-        (**self).send_message(command)
-    }
-    fn send_pong(&mut self, data: Vec<u8>) -> Result<(), Box<Error>> {
-        (**self).send_pong(data)
-    }
-}
-
 impl GameClientReader for ClientReaderBox {
     fn receive_message(&mut self) -> Option<Result<PlayerCommand, Box<Error>>> {
         match self {
