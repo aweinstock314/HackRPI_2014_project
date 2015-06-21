@@ -73,7 +73,7 @@ function makeInitialState() {
     var state = {};
     state.canvas = null;
     state.gl = null;
-    state.redraw = false;
+    state.redraw = true;
     state.playerNumber = null;
     state.shaderProgram = null;
     state.world = {};
@@ -269,6 +269,9 @@ function main() {
             }
         });
     };
+    ws.onerror = function(event) {
+        log("Error connecting to the server.");
+    }
     makeKeyRepeater(window, 10, function(currentlyHeldKeys) {
         function keyHeld(name) { return !!currentlyHeldKeys[name.charCodeAt(0)]; }
         function send(variant, fields) {
