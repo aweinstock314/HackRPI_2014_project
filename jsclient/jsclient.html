@@ -293,6 +293,8 @@ function main() {
         if(keyHeld("K")) { sendRotate(0, -ROTATE_DELTA); }
         if(keyHeld("J")) { sendRotate(-ROTATE_DELTA, 0); }
         if(keyHeld("L")) { sendRotate(ROTATE_DELTA, 0); }
+
+        if(keyHeld(" ")) { send("Shoot", []); }
     });
 }
 </script>
